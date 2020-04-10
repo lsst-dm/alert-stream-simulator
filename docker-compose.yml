@@ -38,11 +38,12 @@ services:
       - "./containers/grafana:/etc/grafana"
 
   influxdb:
-    image: influxdb:1.5.4
+    image: influxdb:1.7
     ports:
       - "8086"
     network_mode: host
+    volumes:
+      - "./containers/influxdb:/etc/influxdb"
+    command: /etc/influxdb/run_influxdb.sh
     environment:
-      - INFLUXDB_DB=broker-simulator
-      - INFLUXDB_ADMIN_USER=admin
-      - INFLUXDB_ADMIN_PASSWORD=admin
+      - INFLUXDB_CONFIG_PATH=/etc/influxdb/influxdb.conf

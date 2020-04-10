@@ -1,0 +1,48 @@
+version: '3.1'
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:5.1.4
+    depends_on:
+      - zookeeper
+      - influxdb
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=localhost:32181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1  # remove for >= 3 brokers
+      - KAFKA_DELETE_TOPIC_ENABLE=true
+    ports:
+      - "9092"
+    network_mode: host
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.1.4
+    depends_on:
+      - influxdb
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=32181
+      - ZOOKEEPER_TICK_TIME=2000
+    ports:
+      - "32181"
+    network_mode: host
+
+  grafana:
+    image: grafana/grafana:6.7.2
+    depends_on:
+      - influxdb
+    ports:
+      - "3000"
+    network_mode: host
+    volumes:
+      - "./containers/grafana:/etc/grafana"
+
+  influxdb:
+    image: influxdb:1.5.4
+    ports:
+      - "8086"
+    network_mode: host
+    environment:
+      - INFLUXDB_DB=broker-simulator
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin

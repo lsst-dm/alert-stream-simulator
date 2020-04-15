@@ -1,0 +1,30 @@
+
+{
+    "servers": [
+        {
+            "port": "9292",
+            "host": "localhost",
+            "alias": "kafka",
+            "queries": [
+                {
+                    "outputWriters": [
+                        {
+                            "@class": "com.googlecode.jmxtrans.model.output.InfluxDbWriterFactory",
+                            "url": "http://localhost:8086/",
+                            "database": "broker_simulator",
+                            "username": "admin",
+                            "password": "admin"
+                        }
+                    ],
+                    "obj": "java.lang:type=Memory",
+                    "attr": [
+                        "HeapMemoryUsage",
+                        "NonHeapMemoryUsage"
+                    ],
+                    "resultAlias": "jvmMemory"
+                }
+            ],
+            "numQueryThreads": 1
+        }
+    ]
+}

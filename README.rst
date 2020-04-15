@@ -1,4 +1,4 @@
-broker-simulator
+alert-stream-simulator
 ################
 
 This repository holds a simulator for Rubin's alert stream, as described in
@@ -19,8 +19,11 @@ you'll need to run a Linux Virtual Machine.
 
 The listeners are:
 
- - Kafka: ``localhost:9092``
- - Zookeeper: ``localhost:32181``
+ - Kafka: ``localhost:9092`` (for the stream) and ``localhost:9292`` (for JMX metrics)
+ - Zookeeper: ``localhost:2181``
+ - Grafana: ``localhost:3000``
+ - InfluxDB: ``localhost:8086``
+
 
 This will only support connections to the Kafka broker from the same host that's
 running the Kafka container. If you want to connect to the broker from another

@@ -1,6 +1,6 @@
 from setuptools import setup
 
-install_requires = ['avro-python3']
+install_requires = ['avro-python3', 'confluent_kafka']
 
 dev_requires = []
 
@@ -17,6 +17,9 @@ setup(name='rubin-alert-stream-simulator',
       author='Spencer Nelson',
       author_email='swnelson@uw.edu',
       license='GPLv3',
+      packages=['streamsim'],
+      package_dir={'': 'python'},
       install_requires=install_requires,
       extras_require={"dev": dev_requires},
+      scripts=["python/bin/rubin-alert-sim"],
       zip_safe=False)

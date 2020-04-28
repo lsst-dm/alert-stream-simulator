@@ -20,7 +20,7 @@ def run():
         parser.print_usage()
     if args.subcommand == "publish-file":
         logging.debug(f"dispatching publish-file command with args: {args}")
-        publish_file(args.broker, args.topic, args.file)
+        publish_file(args.broker, args.topic, args.file, args.timeout_sec)
 
 
 def construct_argparser():

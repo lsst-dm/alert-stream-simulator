@@ -16,7 +16,9 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -24,6 +26,19 @@ jobs:
 
     - name: Run docker-compose up
       run: docker-compose up -d
-      
+
     - name: Check that containers are up
       run: docker ps -a
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install rubin-alert-sim program
+      run: pip install .
+
+    - name: Try sending a test alert file
+      # TODO: Add verification that it was written correctly. For now, we just
+      # hope for a zero exit code.
+      run: rubin-alert-sim --debug publish-file ./test/fixtures/fakeAlert.avro

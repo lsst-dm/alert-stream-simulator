@@ -3,6 +3,7 @@ alert-stream-simulator
 
 This repository holds a simulator for Rubin's alert stream, as described in
 `DMTN-149`_.
+
 .. _DMTN-149: https://dmtn-149.lsst.io/
 
 
@@ -30,6 +31,6 @@ running the Kafka container. If you want to connect to the broker from another
 host, you'll need to make a change to these listeners. Edit the
 `docker-compose.yml` file, changing all references to "``localhost``" to the IP
 address of the broker. If you'd like a lot of background on this subject, `try
-this blog post <https://rmoff.net/2018/08/02/kafka-listeners-explained/>`.
+this blog post <https://rmoff.net/2018/08/02/kafka-listeners-explained/>`_.
 
 .. _Confluent's Recommendations: https://docs.confluent.io/current/installation/docker/installation/index.html#considerations

@@ -30,6 +30,11 @@ jobs:
     - name: Check that containers are up
       run: docker ps -a
 
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
     - name: Install rubin-alert-sim program
       run: pip install .
 

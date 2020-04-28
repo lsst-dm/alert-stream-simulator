@@ -35,6 +35,15 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: DEBUG: Download avro-python3
+      run: |
+        pip download avro-python3
+        md5sum avro-python3-1.9.2.1.tar.gz
+        tar -xzvf avro-python3-*.tar.gz
+        ls avro-python3-*/avro_python3.egg-info/*
+        cat avro-python3-*/avro_python3.egg-info/*
+
+
     - name: Update pip
       run: python -m pip install --upgrade pip
 

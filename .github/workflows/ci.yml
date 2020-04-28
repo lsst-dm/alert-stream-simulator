@@ -24,6 +24,14 @@ jobs:
 
     - name: Run docker-compose up
       run: docker-compose up -d
-      
+
     - name: Check that containers are up
       run: docker ps -a
+
+    - name: Install rubin-alert-sim program
+      run: pip install .
+
+    - name: Try sending a test alert file
+      # TODO: Add verification that it was written correctly. For now, we just
+      # hope for a zero exit code.
+      run: rubin-alert-sim --debug publish-file ./test/fixtures/fakeAlert.avro

@@ -37,11 +37,11 @@ class SimplePacer(object):
             return None
 
         logger.debug(f"alert time: {alert_time(self.next_alert)}")
-        until = self.adjusted_time_until(self.next_alert)
+        until = self.adjusted_time_until(self.next_alert).total_seconds()
         logger.debug(f"calculated wait period of {until}")
-        if until > datetime.timedelta(0):
+        if until > 0:
             logger.debug(f"waiting")
-            asyncio.sleep(until)
+            await asyncio.sleep(until)
         return_val = self.next_alert
         try:
             self.next_alert = next(self.data_file_reader)
@@ -56,7 +56,7 @@ class SimplePacer(object):
         file so that they appear to be in the future
 
         """
-        return self._now() - (alert_time(alert) + self.time_offset)
+        return (alert_time(alert) + self.time_offset) - self._now()
 
     def _now(self):
         """ Alias for datetime.datetime.now() to suppport monkeypatching in tests. """

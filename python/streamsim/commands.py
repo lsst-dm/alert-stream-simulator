@@ -22,8 +22,10 @@
 import asyncio
 import argparse
 import logging
+import datetime
+import concurrent.futures
 
-from streamsim import sender, pacer
+from streamsim import sender, pacer, fastavro_pacer
 
 logger = logging.getLogger("rubin-alert-sim")
 
@@ -43,7 +45,7 @@ def run():
         parser.print_usage()
     if args.subcommand == "publish-file":
         logger.debug(f"dispatching publish-file command with args: {args}")
-        asyncio.run(publish_file(args.broker, args.topic, args.file, args.timeout_sec))
+        asyncio.run(publish_file(args.broker, args.topic, args.file, args.timeout_sec, fastavro=args.use_fastavro, compression=args.compression, parallelism=args.parallelism))
 
 
 def construct_argparser():
@@ -79,17 +81,49 @@ def construct_argparser():
         help="how long, in seconds, to wait before giving up when flushing a write to kafka",
     )
     publish_file_cmd.add_argument(
+        "--use-fastavro", action="store_true",
+        help="use fastavro library for serde",
+    )
+    publish_file_cmd.add_argument(
+        "--compression", type=str, default="null",
+        help="compression codec to use on writes (only works with fastavro)",
+    )
+    publish_file_cmd.add_argument(
+        "--parallelism", type=str, default="None",
+        help="parallelism mode (can be 'none', 'thread', or 'process')",
+    )
+    publish_file_cmd.add_argument(
         "file", type=argparse.FileType('rb'),
         help="alert file to send",
     )
     return parser
 
 
-async def publish_file(broker, topic, alert_file, timeout):
+async def publish_file(broker, topic, alert_file, timeout, fastavro, compression, parallelism):
     """Send all the alerts in a single file to Kafka."""
-    simple_pacer = pacer.SimplePacer(alert_file)
-    producer = sender.AlertProducer(broker, topic, simple_pacer.schema)
-    async for alert in simple_pacer.iterate():
-        logger.info(f"sending alert (alert={alert['alertId']})")
-        producer.send_alert(alert)
+    if parallelism == "thread":
+        logger.debug("thread parallelism")
+        pool = concurrent.futures.ThreadPoolExecutor()
+    elif parallelism == "process":
+        logger.debug("process parallelism")
+        pool = concurrent.futures.ProcessPoolExecutor()
+    else:
+        logger.debug("no parallelism")
+        pool = None
+    if fastavro:
+        pace = fastavro_pacer.FastavroSimplePacer(alert_file)
+        producer = sender.FastavroAlertProducer(broker, topic, pace.schema, compression, pool)
+    else:
+        pace = pacer.SimplePacer(alert_file)
+        producer = sender.AlertProducer(broker, topic, pace.schema)
+    start = datetime.datetime.now()
+    n = 0
+    async for alert in pace.iterate():
+        logger.info(f"sending alert (alert={alert['alertId']} source={alert['diaSource']['diaSourceId']} ccdVisit={alert['diaSource']['ccdVisitId']})")
+        await producer.send_alert(alert)
+        n += 1
+    end = datetime.datetime.now()
+    duration = end - start
+    rate = n / duration.total_seconds()
+    print(f"sent {n} alerts in {duration.total_seconds():.2f} sec ({rate:.2f}/s)")
     producer.flush(timeout=timeout)

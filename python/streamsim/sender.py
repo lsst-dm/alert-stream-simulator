@@ -18,19 +18,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import io
+import json
 import logging
+
+import avro.io
 import confluent_kafka
+
+
+logger = logging.getLogger("rubin-alert-sim.sender")
 
 
 class AlertProducer(confluent_kafka.Producer):
     """A client capable of sending alert data to a Kafka broker.
 
     """
-    def __init__(self, broker_url, topic):
+    def __init__(self, broker_url, topic, schema):
         kafka_config = {
             "bootstrap.servers": broker_url,
         }
         self.topic = topic
+        self.writer = avro.io.DatumWriter(writer_schema=schema)
         super().__init__(kafka_config)
 
     def send_alert(self, alert):
@@ -38,8 +46,11 @@ class AlertProducer(confluent_kafka.Producer):
 
         Parameters
         ----------
-        alert : `bytes`
-            A sequence of bytes that should encode an alert.
+        alert : `dict`
+            An alert that can be serialized into avro.
         """
-        logging.debug("sending alert (%d bytes)", len(alert))
-        self.produce(topic=self.topic, value=alert)
+        buffer = io.BytesIO()
+        self.writer.write(alert, avro.io.BinaryEncoder(buffer))
+        alert_bytes = buffer.getvalue()
+        logger.debug("sending alert (%d bytes)", len(alert_bytes))
+        self.produce(topic=self.topic, value=alert_bytes)

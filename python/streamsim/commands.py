@@ -19,11 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
 import argparse
 import logging
 
-from streamsim import sender
+from streamsim import sender, pacer
 
+logger = logging.getLogger("rubin-alert-sim")
 
 def run():
     """Parse command line arguments and execute a command."""
@@ -40,8 +42,8 @@ def run():
     if args.subcommand is None:
         parser.print_usage()
     if args.subcommand == "publish-file":
-        logging.debug(f"dispatching publish-file command with args: {args}")
-        publish_file(args.broker, args.topic, args.file, args.timeout_sec)
+        logger.debug(f"dispatching publish-file command with args: {args}")
+        asyncio.run(publish_file(args.broker, args.topic, args.file, args.timeout_sec))
 
 
 def construct_argparser():
@@ -83,8 +85,11 @@ def construct_argparser():
     return parser
 
 
-def publish_file(broker, topic, alert_file, timeout):
+async def publish_file(broker, topic, alert_file, timeout):
     """Send all the alerts in a single file to Kafka."""
-    producer = sender.AlertProducer(broker, topic)
-    producer.send_alert(alert_file.read())
+    simple_pacer = pacer.SimplePacer(alert_file)
+    producer = sender.AlertProducer(broker, topic, simple_pacer.schema)
+    async for alert in simple_pacer.iterate():
+        logger.info(f"sending alert (alert={alert['alertId']})")
+        producer.send_alert(alert)
     producer.flush(timeout=timeout)

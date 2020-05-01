@@ -16,6 +16,8 @@ import (
 	"github.com/segmentio/kafka-go/lz4"
 	"github.com/segmentio/kafka-go/snappy"
 	"github.com/segmentio/kafka-go/zstd"
+
+	"C"
 )
 
 func main() {

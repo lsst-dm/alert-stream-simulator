@@ -45,7 +45,7 @@ class FastavroAlertProducer(confluent_kafka.Producer):
 
     def serialize(self, alert):
         buffer = io.BytesIO()
-        fastavro.write.writer(fo=buffer, codec=self.compression, schema=self.schema, records=[alert])
+        fastavro.write.schemaless_writer(buffer, self.schema, alert)
         alert_bytes = buffer.getvalue()
         return alert_bytes
 

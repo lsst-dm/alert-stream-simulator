@@ -1,7 +1,7 @@
 import os
 import unittest
 
-LICENSE_PREAMBLE = """# This file is part of rubin-alert-stream.
+LICENSE_PREAMBLE = """# This file is part of alert-stream-simulator.
 #
 # Developed for the LSST Data Management System.
 # This product includes software developed by the LSST Project

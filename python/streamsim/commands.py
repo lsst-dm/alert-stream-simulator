@@ -25,7 +25,7 @@ import logging
 import datetime
 import concurrent.futures
 
-from streamsim import sender, pacer, fastavro_pacer
+from streamsim import sender, pacer, fastavro_pacer, replay
 
 logger = logging.getLogger("rubin-alert-sim")
 
@@ -46,6 +46,10 @@ def run():
     if args.subcommand == "publish-file":
         logger.debug(f"dispatching publish-file command with args: {args}")
         asyncio.run(publish_file(args.broker, args.topic, args.file, args.timeout_sec, fastavro=args.use_fastavro, compression=args.compression, parallelism=args.parallelism))
+    if args.subcommand == "preload":
+        raise NotImplementedError("preload isn't written yet")
+    if args.subcommand == "replay":
+        replay_cmd(args.broker, args.src_topic, args.dst_topic, args.timeout_sec, args.block_size)
 
 
 def construct_argparser():
@@ -63,6 +67,45 @@ def construct_argparser():
     parser.add_argument("-v", "--verbose", action="store_true", help="enable info-level logging")
     parser.add_argument("-d", "--debug", action="store_true", help="enable debug-level logging")
     subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
+
+    preload_cmd = subparsers.add_parser(
+        "preload", help="prepare and load data into Kafka for replace",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    preload_cmd.add_argument(
+        "-B", "--broker", type=str, default="localhost:9092",
+        help="address of the Kafka broker to connect to",
+    )
+    preload_cmd.add_argument(
+        "--topic", type=str, default="alerts",
+        help="Kafka topic name to use",
+    )
+
+    replay_cmd = subparsers.add_parser(
+        "replay", help="play back a stream that's been loaded into kafka",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    replay_cmd.add_argument(
+        "-B", "--broker", type=str, default="localhost:9092",
+        help="address of the Kafka broker to connect to",
+    )
+    replay_cmd.add_argument(
+        "--src-topic", type=str, default="alerts",
+        help="Kafka topic name to source data from",
+    )
+    replay_cmd.add_argument(
+        "--dst-topic", type=str, default="alerts-replay",
+        help="Kafka topic name to source data from",
+    )
+    replay_cmd.add_argument(
+        "--timeout-sec", type=float, default=10.0,
+        help="how long, in seconds, to wait before giving up when flushing a write to kafka",
+    )
+    replay_cmd.add_argument(
+        "--block-size", type=int, default=100,
+        help="number of messages to retrieve per consume call when replaying",
+    )
+
 
     publish_file_cmd = subparsers.add_parser(
         "publish-file", help="publish alert data sourced from a single file",
@@ -127,3 +170,9 @@ async def publish_file(broker, topic, alert_file, timeout, fastavro, compression
     rate = n / duration.total_seconds()
     print(f"sent {n} alerts in {duration.total_seconds():.2f} sec ({rate:.2f}/s)")
     producer.flush(timeout=timeout)
+
+
+def replay_cmd(broker, src_topic, dst_topic, timeout, block_size):
+    replayer = replay.Replayer(broker, src_topic, dst_topic, timeout, block_size)
+    replayer.replay_loop(block_size)
+    replayer.close()

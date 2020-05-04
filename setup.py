@@ -1,6 +1,6 @@
 from setuptools import setup
 
-install_requires = ['avro-python3', 'confluent_kafka', 'astropy', 'fastavro']
+install_requires = ['avro-python3', 'confluent_kafka>=1.4.0', 'astropy', 'fastavro']
 
 dev_requires = []
 

@@ -2,7 +2,7 @@ from setuptools import setup
 
 install_requires = ['avro-python3', 'confluent_kafka']
 
-dev_requires = []
+dev_requires = ['flake8', 'pep8-naming']
 
 setup(name='rubin-alert-stream-simulator',
       version="0.1.0",

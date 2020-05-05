@@ -1,6 +1,7 @@
 import os
 import unittest
 
+
 LICENSE_PREAMBLE = """# This file is part of alert-stream-simulator.
 #
 # Developed for the LSST Data Management System.
@@ -23,6 +24,7 @@ LICENSE_PREAMBLE = """# This file is part of alert-stream-simulator.
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+
 class TestLicenseHeaders(unittest.TestCase):
     def testFilesHaveLicenseHeader(self):
         repo_root = os.path.dirname(os.path.dirname(__file__))
@@ -35,8 +37,8 @@ class TestLicenseHeaders(unittest.TestCase):
 
     @staticmethod
     def gather_python_files(source_dir):
-        """Traverse source_dir and all subdirectories looking for files that end with
-        .py. Put their filenames all in a list and return it.
+        """Traverse source_dir and all subdirectories looking for files that
+        end with .py. Put their filenames all in a list and return it.
         """
 
         python_files = []
@@ -52,8 +54,6 @@ class TestLicenseHeaders(unittest.TestCase):
         with open(filename, "r") as fp:
             contents = fp.read()
             return substring in contents
-
-
 
 
 if __name__ == "__main__":

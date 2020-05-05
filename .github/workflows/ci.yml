@@ -12,6 +12,21 @@ on:
 
 jobs:
   # The test job runs unit tests - anything that doesn't depend on a real broker
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+
+    - name: Install program, including any dev dependencies
+      run: pip install '.[dev]'
+
+    - name: Run linter
+      run: make lint
+
   test:
     runs-on: ubuntu-latest
     strategy:

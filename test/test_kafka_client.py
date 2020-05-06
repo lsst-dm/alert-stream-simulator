@@ -21,6 +21,7 @@
 import time
 import unittest
 import pytest
+import logging
 
 import confluent_kafka
 
@@ -63,5 +64,12 @@ class TestKafkaClientIntegration(unittest.TestCase):
             # Finally, try to create a totally new topic with delete_if_exists
             client.create_topic(new_topic, delete_if_exists=True)
         finally:
-            client.delete_topic(preexisting_topic)
-            client.delete_topic(new_topic)
+            try:
+                client.delete_topic(preexisting_topic)
+            except Exception as e:
+                logging.warn(f"unable to delete topic {preexisting_topic}: {e}")
+            try:
+                client.delete_topic(new_topic)
+            except Exception as e:
+                logging.warn(f"unable to delete topic {new_topic}: {e}")
+            client.close()

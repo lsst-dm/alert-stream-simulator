@@ -19,40 +19,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import logging
-import itertools
-
-import fastavro
+import datetime
+import time
 
 from streamsim import _kafka, serialization
 
 
-logger = logging.getLogger("rubin-alert-sim.prepare")
+logger = logging.getLogger("rubin-alert-sim.play")
 
 
-def create(broker, topic, alert_file, timeout, force=False):
-    reader = fastavro.reader(alert_file)
+def play(broker, src_topic, dst_topic, dst_topic_partitions, force):
     kafka_client = _kafka._KafkaClient(broker)
+    logger.debug(f"creating topic {dst_topic}")
+    kafka_client.create_topic(dst_topic, dst_topic_partitions, force)
 
-    # Create a new topic for us to write to.
-    kafka_client.create_topic(topic, num_partitions=1, delete_if_exists=force)
-
-    # Peak at the first alert in the file. This becomes our reference point for
-    # measuring timestamps.
-    first_alert = next(reader)
-    first_timestamp = serialization.alert_time(first_alert)
-    n = 0
-    for alert in itertools.chain([first_alert], reader):
-        alert_bytes = serialization.serialize_alert(reader.writer_schema, alert)
-        time_offset = (serialization.alert_time(alert) - first_timestamp)
-
-        kafka_client.producer.produce(
-            topic=topic,
-            value=alert_bytes,
-            headers={
-                "alertsim-time-offset": serialization.serialize_time_offset(time_offset),
-            },
-        )
-        n += 1
+    logger.debug(f"subscribing to topic {src_topic}")
+    kafka_client.subscribe(src_topic)
+    start = datetime.datetime.now()
+    for msg in kafka_client.iterate():
+        since_start = datetime.datetime.now() - start
+        offset = serialization.get_message_time_offset(msg)
+        if since_start < offset:
+            time.sleep((offset - since_start).total_seconds())
+        logger.debug(f"sending message of size {len(msg)}")
+        kafka_client.producer.produce(dst_topic, msg.value())
 
     kafka_client.close()
-    return n
+    dur = (datetime.datetime.now() - start).total_seconds()
+    logger.info(f"sent 1000 alerts in {dur}s ({1000.0/dur}/s)")

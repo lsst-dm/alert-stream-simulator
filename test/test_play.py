@@ -27,16 +27,15 @@ import pytest
 import astropy.time
 import fastavro
 
-from streamsim import creator, _kafka, serialization
+from streamsim import creator, player, _kafka
 
 
 @pytest.mark.integration_test
-class TestCreateIntegration(unittest.TestCase):
-
+class TestPlayIntegration(unittest.TestCase):
     @staticmethod
     def mock_alert(alert_id, timestamp):
-        """Generate a minimal mock alert. Timestamp should be an ISO time
-        string.
+        """Generate a minimal mock alert.
+        Timestamp should be an ISO time string.
 
         """
         return {
@@ -74,8 +73,10 @@ class TestCreateIntegration(unittest.TestCase):
         with open(schema_path, "r") as schema_file:
             self.schema = json.load(schema_file)
 
-    def test_create(self):
-        topic_name = "TestCreateIntegration.test_create"
+    def test_play(self):
+        src_topic_name = "TestPlayIntegration.test_play_src"
+        dst_topic_name = "TestPlayIntegration.test_play_dst"
+        broker_url = "localhost:9092"
         alerts = [
             self.mock_alert(1, "2020-01-01T00:00:00"),
             self.mock_alert(2, "2020-01-01T00:00:00"),
@@ -85,19 +86,15 @@ class TestCreateIntegration(unittest.TestCase):
         ]
         alert_file = self.mock_alert_file(alerts)
 
-        n_sent = creator.create("localhost:9092", topic_name, alert_file, 5.0, True)
+        # Create a stream and populate it.
+        n_sent = creator.create(broker_url, src_topic_name, alert_file, 5.0, True)
         self.assertEqual(n_sent, len(alerts))
 
-        kc = _kafka._KafkaClient("localhost:9092")
-        kc.subscribe(topic_name, 15)
+        # Replay the stream into a new topic.
+        player.play(broker_url, src_topic_name, dst_topic_name, 1, True)
 
+        # Check that the new topic contains all the messages from the stream.
+        kc = _kafka._KafkaClient(broker_url)
+        kc.subscribe(dst_topic_name, 15)
         msgs = kc.consumer.consume(n_sent, timeout=20)
-        self.assertAlmostEqual(len(msgs), n_sent)
-        expected_offsets = [0.0, 0.0, 1.0, 2.0, 2.0]
-        have_offsets = [serialization.get_message_time_offset(m).total_seconds() for m in msgs]
-        self.assertEqual(have_offsets, expected_offsets)
-
-        for m in msgs:
-            self.assertGreater(len(m), 0)
-
-        kc.close()
+        self.assertEqual(len(msgs), n_sent)

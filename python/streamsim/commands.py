@@ -22,7 +22,7 @@
 import argparse
 import logging
 
-from streamsim import creator
+from streamsim import creator, player
 
 
 def run():
@@ -41,6 +41,10 @@ def run():
         logging.debug(f"dispatching create-stream command with args: {args}")
         n = creator.create(args.broker, args.dst_topic, args.file, args.timeout_sec, args.force)
         print(f"successfully preloaded stream with {n} alerts")
+    elif args.subcommand == "play-stream":
+        logging.debug(f"dispatching play-stream command with args: {args}")
+        player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
+                    args.force)
     else:
         parser.print_usage()
 
@@ -83,6 +87,30 @@ def construct_argparser():
     create_cmd.add_argument(
         "file", type=argparse.FileType('rb'),
         help="alert file to send",
+    )
+
+    play_cmd = subparsers.add_parser(
+        "play-stream", help="play back a stream that has already been created",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    play_cmd.add_argument(
+        "-B", "--broker", type=str, default="localhost:9092",
+        help="address of the Kafka broker to connect to",
+    )
+    play_cmd.add_argument(
+        "--dst-topic", type=str, default="alerts-stream",
+        help="name of the Kafka topic that will provide a live feed of the stream contents"
+    )
+    play_cmd.add_argument(
+        "--dst-topic-partitions", type=int, default="1",
+        help="number of partitions to create for the destination topic"
+    )
+    play_cmd.add_argument(
+        "--src-topic", type=str, default="alerts-reservoir",
+        help="name of the Kafka topic that is the source of the stream",
+    )
+    play_cmd.add_argument(
+        "--force", action="store_true", help="overwrite dst-topic if it already exists",
     )
 
     return parser

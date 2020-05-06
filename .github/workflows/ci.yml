@@ -56,5 +56,5 @@ jobs:
       # TODO: Add verification that it was written correctly. For now, we just
       # hope for a zero exit code.
       run: |
-        rubin-alert-sim --debug create-stream --dst-topic=test-reservoir ./test/fixtures/fakeAlert.avro
+        rubin-alert-sim --debug create-stream --dst-topic=test-reservoir ./test/fixtures/sample_10_alert.avro
         rubin-alert-sim --debug play-stream --src-topic=test-reservoir --dst-topic=test-stream

@@ -34,6 +34,7 @@ class _KafkaClient(object):
 
     """
     def __init__(self, broker_url, id="rubin-alert-sim"):
+        logger.debug(f"creating client to connect to broker url={broker_url} id={id}")
         admin_config = {
             "bootstrap.servers": broker_url,
             "socket.timeout.ms": 5_000,
@@ -63,11 +64,13 @@ class _KafkaClient(object):
 
     def delete_topic(self, topic):
         """ Delete a topic from the Kafka cluster. """
+        logger.debug(f"deleting topic name={topic}")
         response = self.admin.delete_topics([topic], operation_timeout=2.0)
         return response[topic].result()
 
     def create_topic(self, topic, num_partitions=1, delete_if_exists=False):
         """ Create a topic in the Kafka cluster. """
+        logger.debug(f"creating topic name={topic} num_partitions={num_partitions}")
         if delete_if_exists:
             return self._create_topic_force(topic, num_partitions)
         new_topic = confluent_kafka.admin.NewTopic(
@@ -93,34 +96,40 @@ class _KafkaClient(object):
         # https://github.com/apache/kafka/pull/7343.
         for iteration in range(10):
             try:
+                logger.debug(f"attempting topic creation name={topic}")
                 response = self.admin.create_topics(
                     [new_topic], operation_timeout=2.0,
                 )
                 return response[topic].result()
             except confluent_kafka.KafkaException as e:
                 if _is_topic_exists_error(e):
+                    logger.debug(f"topic name={topic} exists, deleting and retrying")
                     try:
                         self.delete_topic(topic)
                     except confluent_kafka.KafkaException as delete_exc:
                         if _is_unknown_topic_error(delete_exc):
-                            pass
+                            logger.debug(f"topic name={topic} is already deleted, retrying")
                         else:
                             raise
                 else:
                     raise
                 time.sleep(0.05 * (2**iteration))
-        raise TimeoutError("failed to delete topic")
+
+        # Last try.
+        response = self.admin.create_topics(
+            [new_topic], operation_timeout=2.0,
+        )
+        return response[topic].result()
 
     def describe_topic(self, topic, timeout=5.0):
         """ Fetch confluent_kafka.TopicMetadata describing a topic. """
+        logger.debug(f"fetching cluster metadata to describe topic name={topic}")
         cluster_meta = self.consumer.list_topics(timeout=timeout)
-        logger.debug(f"cluster meta topics: {cluster_meta.topics.keys()}")
-        logger.debug(f"looking for {topic}")
-        logger.debug(f"have {cluster_meta.topics.get(topic, None)}")
         return cluster_meta.topics[topic]
 
     def close(self):
         """ Shut down the client's underlying consumer and producer. """
+        logger.debug("shutting down client")
         self.consumer.close()
         self.producer.flush()
 
@@ -129,9 +138,11 @@ class _KafkaClient(object):
         Groups; it assigns all partitions manually to this process.
 
         """
+        logger.debug(f"subscribing to topic {topic}")
         topic_meta = self.describe_topic(topic)
         assignment = []
         for partition_id in topic_meta.partitions.keys():
+            logger.debug(f"adding subscription to topic partition={partition_id}")
             tp = confluent_kafka.TopicPartition(
                 topic=topic,
                 partition=partition_id,
@@ -139,8 +150,8 @@ class _KafkaClient(object):
             )
             assignment.append(tp)
 
+        logger.debug("registering topic assignment")
         self.consumer.assign(assignment)
-        logger.debug(self.consumer.assignment())
 
 
 def _is_topic_exists_error(kafka_exception):

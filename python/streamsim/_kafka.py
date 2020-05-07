@@ -29,33 +29,63 @@ import confluent_kafka.admin
 logger = logging.getLogger("rubin-alert-sim.kafka")
 
 
+def _error_callback(kafka_error):
+    """Callback which fires when confluent_kafka producer or consumer
+    encounters an asynchronous error.
+
+    Raises
+    ------
+    `confluent_kafka.KafkaError`
+        Reraised from confluent_kafka.
+    """
+    if kafka_error.code() == confluent_kafka.KafkaError._ALL_BROKERS_DOWN:
+        # This error occurs very frequently. It's not nearly as fatal as it
+        # sounds: it really indicates that the client's broker metadata has
+        # timed out. It appears to get triggered in races during client
+        # shutdown, too. See https://github.com/edenhill/librdkafka/issues/2543
+        # for more background.
+        logger.warn("client is currently disconnected from all brokers")
+    else:
+        logger.error(f"internal kafka error: {kafka_error}")
+        raise(kafka_error)
+
+
 class _KafkaClient(object):
     """Combined client for Kafka producing, consuming, and administration.
 
+    Parameters
+    ----------
+    broker_url : `str`
+        The URL of a Kafka broker to connect to
+    id : `str`
+        An identifier to used by the Kafka broker to log interactions
+        and track consumer offsets
     """
+
     def __init__(self, broker_url, id="rubin-alert-sim"):
         logger.debug(f"creating client to connect to broker url={broker_url} id={id}")
         admin_config = {
             "bootstrap.servers": broker_url,
             "socket.timeout.ms": 5_000,
-            "error_cb": logger.error,
+            "error_cb": _error_callback,
             "throttle_cb": logger.warn,
         }
         self.admin = confluent_kafka.admin.AdminClient(admin_config)
         producer_config = {
             "bootstrap.servers": broker_url,
             "socket.timeout.ms": 5_000,
-            "error_cb": logger.error,
+            "error_cb": _error_callback,
             "throttle_cb": logger.warn,
             "socket.keepalive.enable": True,
             "message.max.bytes": 10_000_000,
+            "queue.buffering.max.kbytes": 1_000_000,
             "queue.buffering.max.ms": 100,
         }
         self.producer = confluent_kafka.Producer(producer_config)
         consumer_config = {
             "bootstrap.servers": broker_url,
             "socket.timeout.ms": 5_000,
-            "error_cb": logger.error,
+            "error_cb": _error_callback,
             "throttle_cb": logger.warn,
             "group.id": id,
             "auto.offset.reset": "earliest",
@@ -64,13 +94,39 @@ class _KafkaClient(object):
         self.consumer = confluent_kafka.Consumer(consumer_config)
 
     def delete_topic(self, topic):
-        """ Delete a topic from the Kafka cluster. """
+        """Delete a topic from the Kafka cluster.
+
+        Parameters
+        ----------
+        topic : `str`
+            The name of the topic to be deleted
+
+        Returns
+        -------
+        topic : `str`
+            Name of the topic deleted.
+        """
         logger.debug(f"deleting topic name={topic}")
         response = self.admin.delete_topics([topic], operation_timeout=5.0)
         return response[topic].result()
 
     def create_topic(self, topic, num_partitions=1, delete_if_exists=False):
-        """ Create a topic in the Kafka cluster. """
+        """Create a topic in the Kafka cluster.
+
+        Parameters
+        ----------
+        topic : `str`
+            The name of the topic to be created.
+        num_partitions : `int`
+            The number of Kafka partitions to create when making the topic.
+        delete_if_exists : `bool`
+            If true, delete any preexisting topic with this name.
+
+        Returns
+        -------
+        topic : `str`
+            Name of the topic created.
+        """
         logger.debug(f"creating topic name={topic} num_partitions={num_partitions}")
         if delete_if_exists:
             return self._create_topic_force(topic, num_partitions)
@@ -83,7 +139,20 @@ class _KafkaClient(object):
         return response[topic].result()
 
     def _create_topic_force(self, topic, num_partitions):
-        """ Create a topic. Delete it if it already exists. """
+        """Create a topic in the Kafka cluster. Delete it if it already exists.
+
+        Parameters
+        ----------
+        topic : `str`
+            The name of the topic to be created.
+        num_partitions : `int`
+            The number of Kafka partitions to create when making the topic.
+
+        Returns
+        -------
+        topic : `str`
+            Name of the topic created.
+        """
         new_topic = confluent_kafka.admin.NewTopic(
             topic=topic,
             num_partitions=num_partitions,
@@ -126,21 +195,44 @@ class _KafkaClient(object):
         return response[topic].result()
 
     def describe_topic(self, topic, timeout=5.0):
-        """ Fetch confluent_kafka.TopicMetadata describing a topic. """
+        """Fetch confluent_kafka.TopicMetadata describing a topic.
+
+        Parameters
+        ----------
+        topic : `str`
+            The name of the topic to be described.
+        timeout : `float`
+            How long to wait before aborting the call to fetch metadata from
+            the Kafka broker.
+
+        Returns
+        -------
+        topic_meta : `confluent_kafka.TopicMetadata`
+            A structure describing the topic.
+        """
         logger.debug(f"fetching cluster metadata to describe topic name={topic}")
         cluster_meta = self.consumer.list_topics(timeout=timeout)
         return cluster_meta.topics[topic]
 
     def close(self):
-        """ Shut down the client's underlying consumer and producer. """
+        """Shut down the client's underlying consumer and producer.
+
+        """
         logger.debug("shutting down client")
         self.consumer.close()
         self.producer.flush()
 
     def subscribe(self, topic, timeout=10.0):
         """Subscribes to a topic for consuming. This method doesn't use Kafka's
-        Consumer Groups; it assigns all partitions manually to this process.
+        Consumer Groups; it assigns all partitions manually to this
+        process.
 
+        Parameters
+        ----------
+        topic : `str`
+            The name of the topic to subscribe to.
+        timeout : `float`
+            How long, in seconds, to block when fetching topic metadata
         """
         logger.debug(f"subscribing to topic {topic}")
         topic_meta = self.describe_topic(topic, timeout)
@@ -161,6 +253,24 @@ class _KafkaClient(object):
         """Returns a generator which iterates over the messages in the topics
         to which the client is subscribed.
 
+        Parameters
+        ----------
+        batch_size : `int`
+            Max messages to retrieve per call to Kafka. Higher
+            values are more efficient in network overhead, but may
+            result in a spikier workload.
+        batch_timeout : `float`
+            How long to wait for a batch of messages to fill up to
+            batch_size.
+
+        Yields
+        ------
+        msg : `confluent_kafka.Message`
+            A single message from the broker on any of the topics to
+            which the client is subscribed.
+
+        Notes
+        -----
         The generator stops when the client has hit the last message in all
         partitions. This set of partitions is calculated just once when
         iterate() is first called; calling subscribe() after iterate() may
@@ -174,6 +284,7 @@ class _KafkaClient(object):
         for tp in assignment:
             if tp.topic not in active_partitions:
                 active_partitions[tp.topic] = set()
+            logger.debug(f"tracking until eof for topic={tp.topic} partition={tp.partition}")
             active_partitions[tp.topic].add(tp.partition)
 
         while len(active_partitions) > 0:
@@ -181,6 +292,7 @@ class _KafkaClient(object):
             for m in messages:
                 err = m.error()
                 if err is None:
+                    logger.debug(f"read message from partition {m.partition()}")
                     yield m
                 elif err.code() == confluent_kafka.KafkaError._PARTITION_EOF:
                     logger.debug(f"eof for topic={m.topic()} partition={m.partition()}")
@@ -197,6 +309,15 @@ class _KafkaClient(object):
 def _is_topic_exists_error(kafka_exception):
     """Returns True iff kafka_exception has the code TOPIC_ALREADY_EXISTS.
 
+    Parameters
+    ----------
+    kafka_exception : `confluent_kafka.KafkaException`
+        An exception raised by low-level confluent_kafka code.
+
+    Returns
+    -------
+    v : `bool`
+        True if the exception has code TOPIC_ALREADY_EXISTS
     """
     code = kafka_exception.args[0].code()
     return code == confluent_kafka.KafkaError.TOPIC_ALREADY_EXISTS
@@ -205,6 +326,15 @@ def _is_topic_exists_error(kafka_exception):
 def _is_unknown_topic_error(kafka_exception):
     """Returns True iff kafka_exception has the code UNKNOWN_TOPIC_OR_PART.
 
+    Parameters
+    ----------
+    kafka_exception : `confluent_kafka.KafkaException`
+        An exception raised by low-level confluent_kafka code.
+
+    Returns
+    -------
+    v : `bool`
+        True if the exception has code UNKNOWN_TOPIC_OR_PART
     """
     code = kafka_exception.args[0].code()
     return code == confluent_kafka.KafkaError.UNKNOWN_TOPIC_OR_PART

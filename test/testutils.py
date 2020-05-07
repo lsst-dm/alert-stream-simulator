@@ -27,7 +27,9 @@ import fastavro
 
 
 def _load_schema():
-    """ Load the alert schema from the test fixtures directory."""
+    """Load the alert schema from the test fixtures directory.
+
+    """
     test_dir = os.path.dirname(os.path.abspath(__file__))
     fixtures_dir = os.path.join(test_dir, "fixtures")
     schema_path = os.path.join(fixtures_dir, "alert_schema.avsc")
@@ -42,6 +44,17 @@ def mock_alert(alert_id, timestamp):
     """Generate a minimal mock alert. Timestamp should be an ISO time
     string.
 
+    Parameters
+    ----------
+    alert_id : `int`
+        An integer to pass in as the `alertId` field of the alert.
+    timestamp : `str`
+        An ISO8601-encoded timestamp string.
+
+    Returns
+    -------
+    alert : `dict`
+        A mock alert with most fields set to zero.
     """
     return {
         "alertId": alert_id,
@@ -67,7 +80,19 @@ def mock_alert(alert_id, timestamp):
 
 
 def mock_alert_file(alerts):
-    """ Generate a mock serialized file of alerts from a list. """
+    """Generate a mock serialized file of alerts from a list.
+
+    Parameters
+    ----------
+    alerts : `list` of `dict`
+        A list of alert dicts to serialize into a mock file.
+
+    Returns
+    -------
+    mock_file : `io.BytesIO`
+        A mock file in memory, seeked to the start of the file, which
+        contains serialized bytes describing alerts.
+    """
     mock_file = io.BytesIO()
     fastavro.writer(mock_file, alert_schema, alerts)
     mock_file.seek(0)

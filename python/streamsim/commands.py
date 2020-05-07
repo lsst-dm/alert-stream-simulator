@@ -43,8 +43,9 @@ def run():
         print(f"successfully preloaded stream with {n} alerts")
     elif args.subcommand == "play-stream":
         logging.debug(f"dispatching play-stream command with args: {args}")
-        player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
-                    args.force)
+        n = player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
+                        args.force)
+        print(f"played {n} alerts from the stream")
     else:
         parser.print_usage()
 
@@ -63,6 +64,7 @@ def construct_argparser():
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="enable info-level logging")
     parser.add_argument("-d", "--debug", action="store_true", help="enable debug-level logging")
+
     subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
 
     create_cmd = subparsers.add_parser(

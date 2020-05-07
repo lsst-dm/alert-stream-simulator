@@ -19,72 +19,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import unittest
-import os.path
-import json
-import io
 
 import pytest
-import astropy.time
-import fastavro
 
 from streamsim import creator, player, _kafka
+from test import testutils
 
 
 @pytest.mark.integration_test
 class TestPlayIntegration(unittest.TestCase):
-    @staticmethod
-    def mock_alert(alert_id, timestamp):
-        """Generate a minimal mock alert.
-        Timestamp should be an ISO time string.
-
-        """
-        return {
-            "alertId": alert_id,
-            "diaSource": {
-                "midPointTai": astropy.time.Time(timestamp).mjd,
-                # Below are all the required fields. Set them to zero.
-                "diaSourceId": 0,
-                "ccdVisitId": 0,
-                "filterName": "",
-                "programId": 0,
-                "ra": 0,
-                "decl": 0,
-                "x": 0,
-                "y": 0,
-                "apFlux": 0,
-                "apFluxErr": 0,
-                "snr": 0,
-                "psFlux": 0,
-                "psFluxErr": 0,
-                "flags": 0,
-            }
-        }
-
-    def mock_alert_file(self, alerts):
-        mock_file = io.BytesIO()
-        fastavro.writer(mock_file, self.schema, alerts)
-        mock_file.seek(0)
-        return mock_file
-
-    def setUp(self):
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        fixtures_dir = os.path.join(test_dir, "fixtures")
-        schema_path = os.path.join(fixtures_dir, "alert_schema.avsc")
-        with open(schema_path, "r") as schema_file:
-            self.schema = json.load(schema_file)
 
     def test_play(self):
         src_topic_name = "TestPlayIntegration.test_play_src"
         dst_topic_name = "TestPlayIntegration.test_play_dst"
         broker_url = "localhost:9092"
         alerts = [
-            self.mock_alert(1, "2020-01-01T00:00:00"),
-            self.mock_alert(2, "2020-01-01T00:00:00"),
-            self.mock_alert(3, "2020-01-01T00:00:01"),
-            self.mock_alert(4, "2020-01-01T00:00:02"),
-            self.mock_alert(5, "2020-01-01T00:00:02"),
+            testutils.mock_alert(1, "2020-01-01T00:00:00"),
+            testutils.mock_alert(2, "2020-01-01T00:00:00"),
+            testutils.mock_alert(3, "2020-01-01T00:00:01"),
+            testutils.mock_alert(4, "2020-01-01T00:00:02"),
+            testutils.mock_alert(5, "2020-01-01T00:00:02"),
         ]
-        alert_file = self.mock_alert_file(alerts)
+        alert_file = testutils.mock_alert_file(alerts)
 
         # Create a stream and populate it.
         n_sent = creator.create(broker_url, src_topic_name, alert_file, 5.0, True)

@@ -77,8 +77,7 @@ def serialize_alert(schema, alert):
 
 def deserialize_alert(schema, alert_bytes):
     header_bytes = alert_bytes[:5]
-    magic, version = deserialize_confluent_wire_header(header_bytes)
-    assert magic == 0
+    version = deserialize_confluent_wire_header(header_bytes)
     assert version == 0
     content_bytes = io.BytesIO(alert_bytes[5:])
     return fastavro.schemaless_reader(content_bytes, schema)

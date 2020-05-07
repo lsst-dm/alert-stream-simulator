@@ -93,11 +93,19 @@ class TestCreateIntegration(unittest.TestCase):
 
         msgs = kc.consumer.consume(n_sent, timeout=20)
         self.assertAlmostEqual(len(msgs), n_sent)
+
+        # Messages should have offset headers attached
         expected_offsets = [0.0, 0.0, 1.0, 2.0, 2.0]
         have_offsets = [serialization.get_message_time_offset(m).total_seconds() for m in msgs]
         self.assertEqual(have_offsets, expected_offsets)
 
-        for m in msgs:
-            self.assertGreater(len(m), 0)
+        # Messages should be deserializable, but not necessarily in the
+        # original order
+        have = [serialization.deserialize_alert(self.schema, m.value()) for m in msgs]
+        want_by_id = {alert["alertId"]: alert for alert in alerts}
+        for alert in have:
+            want_timestamp = want_by_id[alert["alertId"]]["diaSource"]["midPointTai"]
+            have_timestamp = alert["diaSource"]["midPointTai"]
+            self.assertEqual(have_timestamp, want_timestamp)
 
         kc.close()

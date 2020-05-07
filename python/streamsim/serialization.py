@@ -21,6 +21,7 @@
 
 import datetime
 import io
+import struct
 
 import astropy.time
 import fastavro
@@ -52,11 +53,35 @@ def deserialize_time_offset(header_value):
     return datetime.timedelta(seconds=float(header_value))
 
 
+ConfluentWireFormatHeader = struct.Struct(">bi")
+
+
+def serialize_confluent_wire_header(schema_version):
+    # Use the Confluent Wire format, described here:
+    # https://docs.confluent.io/current/schema-registry/serdes-develop/index.html#wire-format
+    return ConfluentWireFormatHeader.pack(0, schema_version)
+
+
+def deserialize_confluent_wire_header(raw):
+    return ConfluentWireFormatHeader.unpack(raw)
+
+
 def serialize_alert(schema, alert):
     """ Serialize an alert to a byte sequence. """
     buf = io.BytesIO()
+    # TODO: Use a proper schema versioning system
+    buf.write(serialize_confluent_wire_header(0))
     fastavro.schemaless_writer(buf, schema, alert)
     return buf.getvalue()
+
+
+def deserialize_alert(schema, alert_bytes):
+    header_bytes = alert_bytes[:5]
+    magic, version = deserialize_confluent_wire_header(header_bytes)
+    assert magic == 0
+    assert version == 0
+    content_bytes = io.BytesIO(alert_bytes[5:])
+    return fastavro.schemaless_reader(content_bytes, schema)
 
 
 def alert_time(alert):

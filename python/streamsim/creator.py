@@ -40,11 +40,12 @@ def create(broker, topic, alert_file, timeout, force=False):
     # measuring timestamps.
     first_alert = next(reader)
     first_timestamp = serialization.alert_time(first_alert)
+    logger.debug(f"first timestamp: {first_timestamp}")
     n = 0
     for alert in itertools.chain([first_alert], reader):
         alert_bytes = serialization.serialize_alert(reader.writer_schema, alert)
         time_offset = (serialization.alert_time(alert) - first_timestamp)
-
+        logger.debug(f"producing alert id={alert['alertId']} with time_offset={time_offset}")
         kafka_client.producer.produce(
             topic=topic,
             value=alert_bytes,

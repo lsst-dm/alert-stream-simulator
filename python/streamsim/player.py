@@ -36,14 +36,18 @@ def play(broker, src_topic, dst_topic, dst_topic_partitions, force):
     logger.debug(f"subscribing to topic {src_topic}")
     kafka_client.subscribe(src_topic)
     start = datetime.datetime.now()
+    n = 0
     for msg in kafka_client.iterate():
+        if n == 0:
+            start = datetime.datetime.now()
         since_start = datetime.datetime.now() - start
         offset = serialization.get_message_time_offset(msg)
         if since_start < offset:
             time.sleep((offset - since_start).total_seconds())
         logger.debug(f"sending message of size {len(msg)}")
         kafka_client.producer.produce(dst_topic, msg.value())
+        n += 1
 
     kafka_client.close()
     dur = (datetime.datetime.now() - start).total_seconds()
-    logger.info(f"sent 1000 alerts in {dur}s ({1000.0/dur}/s)")
+    logger.info(f"sent {n} alerts in {dur:.2f}s ({n/dur:.2f}/s)")

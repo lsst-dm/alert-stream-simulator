@@ -13,6 +13,8 @@ services:
       - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1  # remove for >= 3 brokers
       - KAFKA_DELETE_TOPIC_ENABLE=true
+      - KAFKA_LOG_SEGMENT_DELETE_DELAY_MS=100
+      - KAFKA_MESSAGE_MAX_BYTES=10000000 # 10MB
     ports:
       - "9092"
       - "9292"

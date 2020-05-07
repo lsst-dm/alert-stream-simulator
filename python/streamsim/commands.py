@@ -63,6 +63,7 @@ def construct_argparser():
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="enable info-level logging")
     parser.add_argument("-d", "--debug", action="store_true", help="enable debug-level logging")
+
     subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
 
     create_cmd = subparsers.add_parser(

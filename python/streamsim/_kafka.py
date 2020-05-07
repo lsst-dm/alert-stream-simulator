@@ -29,6 +29,11 @@ import confluent_kafka.admin
 logger = logging.getLogger("rubin-alert-sim.kafka")
 
 
+def _error_callback(kafka_error):
+    logger.error(f"internal kafka error: {kafka_error}")
+    raise(kafka_error)
+
+
 class _KafkaClient(object):
     """Combined client for Kafka producing, consuming, and administration.
 
@@ -38,24 +43,25 @@ class _KafkaClient(object):
         admin_config = {
             "bootstrap.servers": broker_url,
             "socket.timeout.ms": 5_000,
-            "error_cb": logger.error,
+            "error_cb": _error_callback,
             "throttle_cb": logger.warn,
         }
         self.admin = confluent_kafka.admin.AdminClient(admin_config)
         producer_config = {
             "bootstrap.servers": broker_url,
             "socket.timeout.ms": 5_000,
-            "error_cb": logger.error,
+            "error_cb": _error_callback,
             "throttle_cb": logger.warn,
             "socket.keepalive.enable": True,
             "message.max.bytes": 10_000_000,
+            "queue.buffering.max.kbytes": 1_000_000,
             "queue.buffering.max.ms": 100,
         }
         self.producer = confluent_kafka.Producer(producer_config)
         consumer_config = {
             "bootstrap.servers": broker_url,
             "socket.timeout.ms": 5_000,
-            "error_cb": logger.error,
+            "error_cb": _error_callback,
             "throttle_cb": logger.warn,
             "group.id": id,
             "auto.offset.reset": "earliest",
@@ -174,6 +180,7 @@ class _KafkaClient(object):
         for tp in assignment:
             if tp.topic not in active_partitions:
                 active_partitions[tp.topic] = set()
+            logger.debug(f"tracking until eof for topic={tp.topic} partition={tp.partition}")
             active_partitions[tp.topic].add(tp.partition)
 
         while len(active_partitions) > 0:
@@ -181,6 +188,7 @@ class _KafkaClient(object):
             for m in messages:
                 err = m.error()
                 if err is None:
+                    logger.debug(f"read message from partition {m.partition()}")
                     yield m
                 elif err.code() == confluent_kafka.KafkaError._PARTITION_EOF:
                     logger.debug(f"eof for topic={m.topic()} partition={m.partition()}")

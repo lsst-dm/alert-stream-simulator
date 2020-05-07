@@ -43,8 +43,9 @@ def run():
         print(f"successfully preloaded stream with {n} alerts")
     elif args.subcommand == "play-stream":
         logging.debug(f"dispatching play-stream command with args: {args}")
-        player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
-                    args.force)
+        n = player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
+                        args.force)
+        print(f"played {n} alerts from the stream")
     else:
         parser.print_usage()
 

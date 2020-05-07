@@ -30,6 +30,19 @@ logger = logging.getLogger("rubin-alert-sim.prepare")
 
 
 def create(broker, topic, alert_file, timeout, force=False):
+    """Creates a new alert stream in the broker. Returns the number of alerts
+    in the stream.
+
+    Alert streams exist in the simulator as Kafka topics with all alerts
+    pre-serialized and stored in Kafka as individual messages. Each Kafka
+    message has headers, and we use those headers to mark the "time offset" of
+    the alert packet.
+
+    The time offset is the number of seconds (as a float) since the first alert
+    in the stream. Later, when we play the stream back, we can obey the header
+    time offsets, sleeping to let data get emitted at a realistic rate.
+
+    """
     reader = fastavro.reader(alert_file)
     kafka_client = _kafka._KafkaClient(broker)
 
@@ -56,4 +69,5 @@ def create(broker, topic, alert_file, timeout, force=False):
         n += 1
 
     kafka_client.close()
+
     return n

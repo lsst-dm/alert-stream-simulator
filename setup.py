@@ -21,5 +21,5 @@ setup(name='rubin-alert-stream-simulator',
       package_dir={'': 'python'},
       install_requires=install_requires,
       extras_require={"dev": dev_requires},
-      scripts=["python/bin/rubin-alert-sim"],
+      scripts=["python/bin/rubin-alert-sim", "python/bin/alert-file-utils"],
       zip_safe=False)

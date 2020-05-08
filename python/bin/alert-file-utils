@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+from __future__ import annotations
+
+from typing import List, Dict
+
+import argparse
+import fastavro
+import glob
+import os
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="alert-file-utils")
+    subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
+
+    peek_parser = subparsers.add_parser("peek")
+    peek_parser.add_argument("--file-glob", type=str, default="*.avro")
+
+    organize_parser = subparsers.add_parser("organize")
+    organize_parser.add_argument("--file-glob", type=str)
+    organize_parser.add_argument("--dst-dir", type=str)
+
+    args = parser.parse_args()
+
+    if args.subcommand == "peek":
+        peek(args.file_glob)
+    elif args.subcommand == "organize":
+        organize(args.file_glob, args.dst_dir)
+
+
+
+def peek(file_glob : str):
+    filenames = glob.glob(file_glob)
+    print_header()
+    for f in filenames:
+        with open(f, "rb") as fp:
+            reader = fastavro.reader(fp)
+            msg = next(reader)
+            print_one(f, msg)
+
+
+def organize(file_glob: str, dst_dir: str):
+    filenames = glob.glob(file_glob)
+    print_header()
+    for f in filenames:
+        with open(f, "rb") as fp:
+            reader = fastavro.reader(fp)
+            msg = next(reader)
+            make_symlink(dst_dir, f, msg)
+
+
+def make_symlink(dir:str, src_filepath:str, alert:Dict) -> None:
+    dst_dir = os.path.join(dir, str(get_midpoint_tai(alert)))
+    os.makedirs(dst_dir, exist_ok=True)
+    dst_filepath = os.path.join(dst_dir, str(get_ccd_visit_id(alert)) + ".avro")
+    os.symlink(os.path.abspath(src_filepath), dst_filepath)
+    print(f"linking {src_filepath} -> {dst_filepath}")
+
+
+def print_header():
+    parts = [
+        "filename",
+        "ccdVisitId",
+        "midPointTai",
+    ]
+    print("\t".join(parts))
+
+
+def get_midpoint_tai(alert:Dict) -> float:
+    return alert['diaSource']['midPointTai']
+
+
+def get_ccd_visit_id(alert:Dict) -> int:
+    return alert['diaSource']['ccdVisitId']
+
+
+def print_one(filename, alert):
+    parts = [
+        filename,
+        str(get_ccd_visit_id(alert)),
+        str(get_midpoint_tai(alert)),
+    ]
+    print("\t".join(parts))
+
+
+if __name__ == "__main__":
+    main()

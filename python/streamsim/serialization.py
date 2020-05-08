@@ -21,7 +21,9 @@
 
 import datetime
 import io
+import json
 import struct
+import pkg_resources
 
 import astropy.time
 import fastavro
@@ -187,3 +189,14 @@ def alert_time(alert):
     """
     raw = alert["diaSource"]["midPointTai"]
     return astropy.time.Time(raw, format="mjd").to_datetime()
+
+
+def load_schema():
+    """Load the alert schema used to encode alerts.
+
+    Returns
+    -------
+    schema : `dict`
+        The parsed Avro schema which defines alerts.
+    """
+    return json.load(pkg_resources.resource_stream("streamsim", "data/alert_schema.avsc"))

@@ -22,4 +22,7 @@ setup(name='rubin-alert-stream-simulator',
       install_requires=install_requires,
       extras_require={"dev": dev_requires},
       scripts=["python/bin/rubin-alert-sim"],
+      package_data={
+          "streamsim": ["data/alert_schema.avsc"],
+      },
       zip_safe=False)

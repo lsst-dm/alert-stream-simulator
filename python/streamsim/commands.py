@@ -22,7 +22,7 @@
 import argparse
 import logging
 
-from streamsim import creator, player
+from streamsim import creator, player, printer
 
 
 def run():
@@ -46,6 +46,9 @@ def run():
         n = player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
                         args.force)
         print(f"played {n} alerts from the stream")
+    elif args.subcommand == "print-stream":
+        logging.debug(f"dispatching print-stream command with args: {args}")
+        printer.print_stream(args.broker, args.src_topic)
     else:
         parser.print_usage()
 
@@ -115,4 +118,15 @@ def construct_argparser():
         "--force", action="store_true", help="overwrite dst-topic if it already exists",
     )
 
+    print_cmd = subparsers.add_parser(
+        "print-stream", help="print the size of messages in the stream in real time"
+    )
+    print_cmd.add_argument(
+        "-B", "--broker", type=str, default="localhost:9092",
+        help="address of the Kafka broker to connect to",
+    )
+    print_cmd.add_argument(
+        "--src-topic", type=str, default="alerts-reservoir",
+        help="name of the Kafka topic that is the source of the stream",
+    )
     return parser

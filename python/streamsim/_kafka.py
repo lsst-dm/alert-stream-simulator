@@ -171,6 +171,13 @@ class _KafkaClient(object):
         logger.debug("registering topic assignment")
         self.consumer.assign(assignment)
 
+    def seek_to_beginning(self):
+        """Reset the consumer to the beginning of all partitions to which it
+        is subscribed."""
+        for tp in self.consumer.assignment():
+            tp.offset = confluent_kafka.OFFSET_BEGINNING
+            self.consumer.seek(tp)
+
     def iterate(self, batch_size=100, batch_timeout=1.0):
         """Returns a generator which iterates over the messages in the topics
         to which the client is subscribed.

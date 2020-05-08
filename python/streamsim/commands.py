@@ -44,7 +44,7 @@ def run():
     elif args.subcommand == "play-stream":
         logging.debug(f"dispatching play-stream command with args: {args}")
         n = player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
-                        args.force)
+                        args.force, args.repeat_interval)
         print(f"played {n} alerts from the stream")
     else:
         parser.print_usage()
@@ -113,6 +113,10 @@ def construct_argparser():
     )
     play_cmd.add_argument(
         "--force", action="store_true", help="overwrite dst-topic if it already exists",
+    )
+    play_cmd.add_argument(
+        "--repeat-interval", type=int, default=-1,
+        help="interval to repeat the stream, in seconds. <0 means don't repeat",
     )
 
     return parser

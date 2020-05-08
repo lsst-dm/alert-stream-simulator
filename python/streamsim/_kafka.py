@@ -30,8 +30,16 @@ logger = logging.getLogger("rubin-alert-sim.kafka")
 
 
 def _error_callback(kafka_error):
-    logger.error(f"internal kafka error: {kafka_error}")
-    raise(kafka_error)
+    if kafka_error.code() == confluent_kafka.KafkaError._ALL_BROKERS_DOWN:
+        # This error occurs very frequently. It's not nearly as fatal as it
+        # sounds: it really indicates that the client's broker metadata has
+        # timed out. It appears to get triggered in races during client
+        # shutdown, too. See https://github.com/edenhill/librdkafka/issues/2543
+        # for more background.
+        logger.warn("client is currently disconnected from all brokers")
+    else:
+        logger.error(f"internal kafka error: {kafka_error}")
+        raise(kafka_error)
 
 
 class _KafkaClient(object):

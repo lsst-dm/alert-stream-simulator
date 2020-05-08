@@ -46,7 +46,7 @@ class _KafkaClient(object):
     """Combined client for Kafka producing, consuming, and administration.
 
     """
-    def __init__(self, broker_url, id="rubin-alert-sim"):
+    def __init__(self, broker_url, id="rubin-alert-sim", enable_eof=True):
         logger.debug(f"creating client to connect to broker url={broker_url} id={id}")
         admin_config = {
             "bootstrap.servers": broker_url,
@@ -73,7 +73,7 @@ class _KafkaClient(object):
             "throttle_cb": logger.warn,
             "group.id": id,
             "auto.offset.reset": "earliest",
-            "enable.partition.eof": True,
+            "enable.partition.eof": enable_eof,
         }
         self.consumer = confluent_kafka.Consumer(consumer_config)
 

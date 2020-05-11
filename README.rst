@@ -13,29 +13,29 @@ Before starting, you'll need:
  - A Linux host (use a VM if you're on OSX or Windows)
  - Python 3.6+
  - Docker
- - `docker-compose <https://docs.docker.com/compose/`_
+ - `docker-compose <https://docs.docker.com/compose/>`_
  - curl
 
 Clone the repository, activate a virtualenv (or whatever Python env isolation
-mechanism you prefer), and then run `make install`. Go get a cup of coffee while
+mechanism you prefer), and then run ``make install``. Go get a cup of coffee while
 datasets are downloaded, dependencies are installed, and Docker containers are
 built.
 
 Usage
 =====
 
-To run the broker infrastructure, run `docker-compose up` from the root of the
+To run the broker infrastructure, run ``docker-compose up`` from the root of the
 repo. This will spin up several containers; once the log output dies down, the
 system should be up and running.
 
-Once the broker is up, open a second terminal and run `rubin-alert-sim --help`.
+Once the broker is up, open a second terminal and run ``rubin-alert-sim --help``.
 This is a CLI tool for interacting with the broker. There are two steps to
 simulate an alert stream:
 
-1. First, you _create_ the stream, seeding the broker with data. Do this with
-   `rubin-alert-sim create-stream`. This step handles serialization, and sets
+1. First, you **create** the stream, seeding the broker with data. Do this with
+   ``rubin-alert-sim create-stream``. This step handles serialization, and sets
    the data rate for the stream.
-2. Second, you _play_ the stream with `rubin-alert-stream play-stream`, which
+2. Second, you **play** the stream with ``rubin-alert-stream play-stream``, which
    publishes the stream at the predefined data rate. This step publishes to a
    new topic.
 
@@ -43,7 +43,7 @@ A basic example
 ---------------
 
 Let's publish a small alert stream from a file. First, make sure the broker
-infastructure is up by running `docker-compose ps` - we expect to see "Up" for
+infastructure is up by running ``docker-compose ps`` - we expect to see "Up" for
 the "State" of all containers::
 
   $ docker-compose ps
@@ -81,7 +81,7 @@ KafkaException: Topic already exists
 ------------------------------------
 
 While working, you might frequently find yourself re-creating and re-running
-streams. Each invocation of the `rubin-alert-sim` creates fresh new topics, and
+streams. Each invocation of the ``rubin-alert-sim`` creates fresh new topics, and
 by default they won't overwrite existing topics. You can pass ``--force`` to
 overwrite an existing topic. For example, ``rubin-alert-sim
 create-stream --dst-topic=rubin_example --force data/rubin_sample.avro``.

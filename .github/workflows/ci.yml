@@ -27,28 +27,9 @@ jobs:
     - name: Run linter
       run: make lint
 
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8]
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install program, including any dev dependencies
-      run: pip install '.[dev]'
-
-    - name: Run tests
-      run: make test
-
   # The integration-test job runs integration tests which actually talk to a
   # kafka broker
-  integration-test:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -66,9 +47,14 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install rubin-alert-sim program
-      run: pip install .
+      run: pip install .[dev]
+
+    - name: Run python integration tests
+      run: make test
 
     - name: Try sending a test alert file
       # TODO: Add verification that it was written correctly. For now, we just
       # hope for a zero exit code.
-      run: rubin-alert-sim --debug publish-file ./test/fixtures/fakeAlert.avro
+      run: |
+        rubin-alert-sim --debug create-stream --dst-topic=test-reservoir ./test/fixtures/sample_10_alert.avro
+        rubin-alert-sim --debug play-stream --src-topic=test-reservoir --dst-topic=test-stream

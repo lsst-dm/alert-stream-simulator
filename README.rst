@@ -57,7 +57,7 @@ the "State" of all containers::
 
 If the infrastructure is up, we can create a stream::
 
-  $ rubin-alert-sim create-stream --dst-topic=rubin_example data/rubin_sample.avro
+  $ rubin-alert-sim create-stream --dst-topic=rubin_example data/rubin_single_ccd_sample.avro
   successfully preloaded stream with 792 alerts
 
 And now we can replay that stream::

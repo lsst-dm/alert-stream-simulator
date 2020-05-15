@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import fastavro
 import sys
-import glob
 
 
 def run_filter(input_filename, output_filename, filter_tai):

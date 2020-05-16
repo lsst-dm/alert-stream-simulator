@@ -47,7 +47,7 @@ def _error_callback(kafka_error):
         logger.warn("client is currently disconnected from all brokers")
     else:
         logger.error(f"internal kafka error: {kafka_error}")
-        raise(kafka_error)
+        raise(confluent_kafka.KafkaException(kafka_error))
 
 
 class _KafkaClient(object):
@@ -303,7 +303,7 @@ class _KafkaClient(object):
                         # Done with all partitions for the topic, remove it
                         del active_partitions[m.topic()]
                 else:
-                    raise(err)
+                    raise(confluent_kafka.KafkaException(err))
 
 
 def _is_topic_exists_error(kafka_exception):

@@ -175,7 +175,7 @@ class _KafkaClient(object):
                 return res
             except confluent_kafka.KafkaException as e:
                 if _is_topic_exists_error(e):
-                    logger.debug(f"topic exists, deleting and retrying")
+                    logger.debug("topic exists, deleting and retrying")
                     try:
                         self.delete_topic(topic)
                     except confluent_kafka.KafkaException as delete_exc:

@@ -15,7 +15,7 @@ Before starting, you'll need:
  - Docker
  - `docker-compose <https://docs.docker.com/compose/>`_
  - curl
- - `libsnappy <https://github.com/google/snappy>`_ (`apt-get install libsnappy-dev` / `yum install libsnappy-devel`)
+ - `libsnappy <https://github.com/google/snappy>`_ (`apt-get install libsnappy-dev` / `yum install snappy-devel`)
 
 Clone the repository, activate a virtualenv (or whatever Python env isolation
 mechanism you prefer), and then run ``make install``. Go get a cup of coffee while

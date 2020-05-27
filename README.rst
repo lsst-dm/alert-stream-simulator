@@ -15,6 +15,7 @@ Before starting, you'll need:
  - Docker
  - `docker-compose <https://docs.docker.com/compose/>`_
  - curl
+ - `libsnappy <https://github.com/google/snappy>`_ (`apt-get install libsnappy-dev` / `yum install snappy-devel`)
 
 Clone the repository, activate a virtualenv (or whatever Python env isolation
 mechanism you prefer), and then run ``make install``. Go get a cup of coffee while
@@ -49,7 +50,7 @@ the "State" of all containers::
   $ docker-compose ps
   Name                             Command               State   Ports
   -----------------------------------------------------------------------------------
-  alert-stream-simulator_grafana_1     /run.sh                          Up
+  Alert-stream-simulator_grafana_1     /run.sh                          Up
   alert-stream-simulator_influxdb_1    /entrypoint.sh /etc/influx ...   Up
   alert-stream-simulator_jmxtrans_1    /bin/sh -c /usr/share/jmxt ...   Up
   alert-stream-simulator_kafka_1       /etc/confluent/docker/run        Up
@@ -57,7 +58,7 @@ the "State" of all containers::
 
 If the infrastructure is up, we can create a stream::
 
-  $ rubin-alert-sim create-stream --dst-topic=rubin_example data/rubin_sample.avro
+  $ rubin-alert-sim create-stream --dst-topic=rubin_example data/rubin_single_ccd_sample.avro
   successfully preloaded stream with 792 alerts
 
 And now we can replay that stream::

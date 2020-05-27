@@ -20,6 +20,8 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+    - name: Install snappy
+      run: sudo apt-get install libsnappy-dev
 
     - name: Install program, including any dev dependencies
       run: pip install '.[dev]'
@@ -45,6 +47,9 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Install snappy
+      run: sudo apt-get install libsnappy-dev
 
     - name: Install rubin-alert-sim program
       run: pip install .[dev]

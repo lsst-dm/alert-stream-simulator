@@ -20,7 +20,7 @@ jobs:
 
     - name: Install program, including any dev dependencies
       run: |
-        python -m pip install --upgrade pip setuptools wheel pkg_resources
+        python -m pip install --upgrade pip setuptools wheel
         pip install '.[dev]'
 
     - name: Run linter
@@ -38,7 +38,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip setuptools wheel pkg_resources
+        python -m pip install --upgrade pip setuptools wheel
         python setup.py bdist_wheel
         pip install dist/*.whl[dev]
     - name: Run tests
@@ -65,7 +65,7 @@ jobs:
 
     - name: Install rubin-alert-sim program
       run: |
-        python -m pip install --upgrade pip setuptools wheel pkg_resources
+        python -m pip install --upgrade pip setuptools wheel
         pip install .[dev]
 
     - name: Run python integration tests

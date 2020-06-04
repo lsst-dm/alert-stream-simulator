@@ -199,4 +199,4 @@ def load_schema():
     schema : `dict`
         The parsed Avro schema which defines alerts.
     """
-    return json.load(pkg_resources.resource_stream("streamsim", "data/alert_schema.avsc"))
+    return json.load(pkg_resources.resource_stream(__name__, "data/alert_schema.avsc"))

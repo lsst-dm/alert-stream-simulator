@@ -32,17 +32,11 @@ jobs:
         python-version: [3.7, 3.8]
     steps:
     - uses: actions/checkout@v2
-    - name: Run docker-compose up
-      run: docker-compose up -d
-    - name: Check that containers are up
-      run: docker ps -a
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-
-    - name: Install rubin-alert-sim program
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install '.[dev]'

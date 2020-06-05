@@ -23,6 +23,8 @@ import datetime
 import time
 
 from streamsim import _kafka, serialization
+from lsst.alert.packet.schema import get_latest_schema_version
+from lsst.alert.packet.schemaRegistry import SchemaRegistry
 
 
 logger = logging.getLogger("rubin-alert-sim.printer")
@@ -39,13 +41,12 @@ def print_stream(broker, topic):
         The name of a Kafka topic to read.
     """
     kafka_client = _kafka._KafkaClient(broker, enable_eof=False)
-    schema = serialization.load_schema()
     kafka_client.consumer.subscribe([topic])
     time.sleep(1)
     while True:
         messages = kafka_client.consumer.consume(100, 0.1)
         for msg in messages:
-            alert = serialization.deserialize_alert(schema, msg.value())
+            alert = serialization.deserialize_alert(msg.value())
             now = str(datetime.datetime.now())
             alertID = alert['alertId']
             historySize = len(alert.get('prvDiaSources') or [])

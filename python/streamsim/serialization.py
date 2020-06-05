@@ -28,6 +28,16 @@ import pkg_resources
 import astropy.time
 import fastavro
 
+from lsst.alert.packet import get_latest_schema_version, SchemaRegistry
+
+
+def _load_latest_schema():
+    latest_version_str = ".".join(map(str, get_latest_schema_version()))
+    return SchemaRegistry.from_filesystem().get_by_version(latest_version_str)
+
+
+_schema_latest = _load_latest_schema()
+
 
 def serialize_time_offset(timedelta):
     """Encodes a timedelta as a string.
@@ -127,15 +137,16 @@ def deserialize_confluent_wire_header(raw):
     return version
 
 
-def serialize_alert(schema, alert):
+def serialize_alert(alert, schema=_schema_latest):
     """Serialize an alert to a byte sequence for sending to Kafka.
 
     Parameters
     ----------
-    schema : `dict`
-        An Avro schema definition describing how to encode `alert`.
     alert : `dict`
         An alert payload to be serialized.
+    schema : `dict`, optional
+        An Avro schema definition describing how to encode `alert`. By default,
+        the most recent schema version is used.
 
     Returns
     -------
@@ -146,31 +157,32 @@ def serialize_alert(schema, alert):
     buf = io.BytesIO()
     # TODO: Use a proper schema versioning system
     buf.write(serialize_confluent_wire_header(0))
-    fastavro.schemaless_writer(buf, schema, alert)
+    buf.write(schema.serialize(alert))
     return buf.getvalue()
 
 
-def deserialize_alert(schema, alert_bytes):
+def deserialize_alert(alert_bytes, schema=_schema_latest):
     """Deserialize an alert message from Kafka.
 
     Paramaters
     ----------
-    schema : `dict`
-        An Avro schema definition describing how `alert_bytes` is encoded.
     alert_bytes : `bytes`
         Binary-encoding serialized Avro alert, including Confluent Wire
         Format prefix.
+    schema : `dict`, optional
+        An Avro schema definition describing how `alert_bytes` is encoded. By
+        default, the latest schema is used.
 
     Returns
     -------
     alert : `dict`
         An alert payload.
+
     """
     header_bytes = alert_bytes[:5]
     version = deserialize_confluent_wire_header(header_bytes)
     assert version == 0
-    content_bytes = io.BytesIO(alert_bytes[5:])
-    return fastavro.schemaless_reader(content_bytes, schema)
+    return schema.deserialize(alert_bytes[5:])
 
 
 def alert_time(alert):
@@ -189,14 +201,3 @@ def alert_time(alert):
     """
     raw = alert["diaSource"]["midPointTai"]
     return astropy.time.Time(raw, format="mjd").to_datetime()
-
-
-def load_schema():
-    """Load the alert schema used to encode alerts.
-
-    Returns
-    -------
-    schema : `dict`
-        The parsed Avro schema which defines alerts.
-    """
-    return json.load(pkg_resources.resource_stream("streamsim", "schema/alert_schema.avsc"))

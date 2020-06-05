@@ -55,7 +55,7 @@ class TestCreateIntegration(unittest.TestCase):
 
         # Messages should be deserializable, but not necessarily in the
         # original order
-        have = [serialization.deserialize_alert(testutils.alert_schema, m.value()) for m in msgs]
+        have = [serialization.deserialize_alert(m.value()) for m in msgs]
         want_by_id = {alert["alertId"]: alert for alert in alerts}
         for alert in have:
             want_timestamp = want_by_id[alert["alertId"]]["diaSource"]["midPointTai"]

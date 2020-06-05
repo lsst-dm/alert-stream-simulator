@@ -1,6 +1,14 @@
 from setuptools import setup
 
-install_requires = ['avro-python3', 'confluent_kafka', 'astropy', 'fastavro', 'python-snappy']
+install_requires = [
+    'avro-python3',
+    'confluent_kafka',
+    'astropy',
+    'fastavro',
+    'python-snappy',
+    'lsst-alert-packet',
+]
+
 
 dev_requires = ['pytest', 'pytest-integration', 'flake8', 'pep8-naming']
 
@@ -22,7 +30,4 @@ setup(name='rubin-alert-stream-simulator',
       install_requires=install_requires,
       extras_require={"dev": dev_requires},
       scripts=["python/bin/rubin-alert-sim"],
-      package_data={
-          "streamsim": ["schema/alert_schema.avsc"],
-      },
       zip_safe=False)

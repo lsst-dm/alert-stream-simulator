@@ -22,7 +22,7 @@ import logging
 import datetime
 import time
 
-from streamsim import _kafka, serialization
+from streamsim import _kafka, timestamps
 
 
 logger = logging.getLogger("rubin-alert-sim.play")
@@ -67,7 +67,7 @@ def play(broker, src_topic, dst_topic, dst_topic_partitions, force):
     n = 0
     for msg in kafka_client.iterate():
         since_start = datetime.datetime.now() - start
-        offset = serialization.get_message_time_offset(msg)
+        offset = timestamps.get_message_time_offset(msg)
         if since_start < offset:
             time.sleep((offset - since_start).total_seconds())
 

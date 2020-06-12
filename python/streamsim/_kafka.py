@@ -60,9 +60,11 @@ class _KafkaClient(object):
     id : `str`
         An identifier to used by the Kafka broker to log interactions
         and track consumer offsets
+    enable_eof : `bool`
+        Configure the client to subscribe to Kafka topics in a "single-pass"
+        fashion, just reading through the topic once.
     """
-
-    def __init__(self, broker_url, id="rubin-alert-sim"):
+    def __init__(self, broker_url, id="rubin-alert-sim", enable_eof=True):
         logger.debug(f"creating client to connect to broker url={broker_url} id={id}")
         admin_config = {
             "bootstrap.servers": broker_url,
@@ -89,7 +91,7 @@ class _KafkaClient(object):
             "throttle_cb": logger.warn,
             "group.id": id,
             "auto.offset.reset": "earliest",
-            "enable.partition.eof": True,
+            "enable.partition.eof": enable_eof,
         }
         self.consumer = confluent_kafka.Consumer(consumer_config)
 

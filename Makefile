@@ -6,7 +6,7 @@ install: datasets
 
 .PHONY: test-quick
 test-quick:
-	python -m unittest -v --without-integration
+	python -m pytest -v --without-integration
 
 .PHONY: test
 test:

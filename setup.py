@@ -1,6 +1,15 @@
 from setuptools import setup
 
-install_requires = ['avro-python3', 'confluent_kafka', 'astropy', 'fastavro', 'python-snappy']
+install_requires = [
+    'avro-python3',
+    'confluent_kafka',
+    'astropy',
+    'fastavro',
+    'python-snappy',
+    'lsst-alert-packet',
+    'lsst-alert-stream>=0.2',
+]
+
 
 dev_requires = ['pytest', 'pytest-integration', 'flake8', 'pep8-naming']
 

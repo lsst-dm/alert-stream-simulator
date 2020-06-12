@@ -19,25 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import io
-import os
-import json
 
 import astropy.time
-import fastavro
+
+from lsst.alert.packet import SchemaRegistry
 
 
-def _load_schema():
-    """Load the alert schema from the test fixtures directory.
-
-    """
-    test_dir = os.path.dirname(os.path.abspath(__file__))
-    fixtures_dir = os.path.join(test_dir, "fixtures")
-    schema_path = os.path.join(fixtures_dir, "alert_schema.avsc")
-    with open(schema_path, "r") as schema_file:
-        return json.load(schema_file)
-
-
-alert_schema = _load_schema()
+alert_schema = SchemaRegistry.from_filesystem().get_by_version("2.1")
 
 
 def mock_alert(alert_id, timestamp):
@@ -94,6 +82,6 @@ def mock_alert_file(alerts):
         contains serialized bytes describing alerts.
     """
     mock_file = io.BytesIO()
-    fastavro.writer(mock_file, alert_schema, alerts)
+    alert_schema.store_alerts(mock_file, alerts)
     mock_file.seek(0)
     return mock_file

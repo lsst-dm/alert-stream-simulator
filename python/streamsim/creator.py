@@ -27,7 +27,6 @@ from lsst.alert.stream import serialization
 from streamsim import _kafka, timestamps
 
 
-
 logger = logging.getLogger("rubin-alert-sim.prepare")
 
 

@@ -75,6 +75,34 @@ Connect your consumers to the ``--dst-topic`` to simulate receiving Rubin's
 alerts.
 
 
+Writing your own consumer
+=========================
+
+If you want to write your own consumer, you'll need a Kafka client library, and you'll need the `lsst-alert-stream` package, which provides serialization utilities.
+
+For a Python Kafka client, we recommend `PyKafka`_, which is both simple and powerful.
+For example, the following snippet will print every alert ID in the stream::
+
+  import pykafka
+  import lsst.alert.stream.serialization
+
+  # Connect to the stream you have running in docker:
+  client = pykafka.KafkaClient(hosts='localhost:9092')
+
+  # Connect to the topic you created with 'rubin-alert-sim play-stream'
+  topic = client.topics['rubin_example_stream'] # Or whatever you set as --dst-topic
+
+  # Note that alert messages are quite large, so you must explicitly permit very large messages:
+  consumer = topic.get_simple_consumer(fetch_message_max_bytes=10000000)
+
+  for raw_msg in consumer:
+      # Parse the contents into a dictionary:
+      alert = lsst.alert.stream.serialization.deserialize_alert(raw_msg)
+
+      # Do whatever you like here:
+      print(alert['alertId'])
+
+
 Troubleshooting
 ===============
 
@@ -115,3 +143,4 @@ address of the broker. If you'd like a lot of background on this subject, `try
 this blog post <https://rmoff.net/2018/08/02/kafka-listeners-explained/>`_.
 
 .. _Confluent's Recommendations: https://docs.confluent.io/current/installation/docker/installation/index.html#considerations
+.. _PyKafka: https://pykafka.readthedocs.io/en/latest/index.html

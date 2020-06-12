@@ -22,9 +22,8 @@ import logging
 import datetime
 import time
 
-from streamsim import _kafka, serialization
-from lsst.alert.packet.schema import get_latest_schema_version
-from lsst.alert.packet.schemaRegistry import SchemaRegistry
+from streamsim import _kafka
+from lsst.alert.stream import serialization
 
 
 logger = logging.getLogger("rubin-alert-sim.printer")

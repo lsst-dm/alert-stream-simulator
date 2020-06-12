@@ -22,7 +22,8 @@ import unittest
 
 import pytest
 
-from streamsim import creator, _kafka, serialization
+from lsst.alert.stream import serialization
+from streamsim import creator, _kafka, timestamps
 from test import testutils
 
 
@@ -50,7 +51,7 @@ class TestCreateIntegration(unittest.TestCase):
 
         # Messages should have offset headers attached
         expected_offsets = [0.0, 0.0, 1.0, 2.0, 2.0]
-        have_offsets = [serialization.get_message_time_offset(m).total_seconds() for m in msgs]
+        have_offsets = [timestamps.get_message_time_offset(m).total_seconds() for m in msgs]
         self.assertEqual(have_offsets, expected_offsets)
 
         # Messages should be deserializable, but not necessarily in the

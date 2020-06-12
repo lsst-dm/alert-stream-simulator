@@ -7,6 +7,7 @@ install_requires = [
     'fastavro',
     'python-snappy',
     'lsst-alert-packet',
+    'lsst-alert-stream>=0.2',
 ]
 
 

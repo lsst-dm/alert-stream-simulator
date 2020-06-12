@@ -23,7 +23,9 @@ import itertools
 
 import fastavro
 
-from streamsim import _kafka, serialization
+from lsst.alert.stream import serialization
+from streamsim import _kafka, timestamps
+
 
 
 logger = logging.getLogger("rubin-alert-sim.prepare")
@@ -65,18 +67,18 @@ def create(broker, topic, alert_file, timeout, force=False):
     # Peak at the first alert in the file. This becomes our reference point for
     # measuring timestamps.
     first_alert = next(reader)
-    first_timestamp = serialization.alert_time(first_alert)
+    first_timestamp = timestamps.alert_time(first_alert)
     logger.debug(f"first timestamp: {first_timestamp}")
     n = 0
     for alert in itertools.chain([first_alert], reader):
         alert_bytes = serialization.serialize_alert(alert)
-        time_offset = (serialization.alert_time(alert) - first_timestamp)
+        time_offset = (timestamps.alert_time(alert) - first_timestamp)
         logger.debug(f"producing alert id={alert['alertId']} with time_offset={time_offset}")
         kafka_client.producer.produce(
             topic=topic,
             value=alert_bytes,
             headers={
-                "alertsim-time-offset": serialization.serialize_time_offset(time_offset),
+                "alertsim-time-offset": timestamps.serialize_time_offset(time_offset),
             },
         )
         n += 1

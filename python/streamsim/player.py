@@ -28,7 +28,7 @@ from streamsim import _kafka, timestamps
 logger = logging.getLogger("rubin-alert-sim.play")
 
 
-def play(broker, src_topic, dst_topic, dst_topic_partitions, force):
+def play(broker, src_topic, dst_topic, dst_topic_partitions, force, repeat_interval=-1):
     """Replays an existing alert stream in the broker, copying it from
     src_topic to dst_topic while obeying time offset headers.
 
@@ -63,19 +63,38 @@ def play(broker, src_topic, dst_topic, dst_topic_partitions, force):
     logger.debug(f"subscribing to topic {src_topic}")
     kafka_client.subscribe(src_topic)
 
-    start = datetime.datetime.now()
-    n = 0
-    for msg in kafka_client.iterate():
-        since_start = datetime.datetime.now() - start
-        offset = timestamps.get_message_time_offset(msg)
-        if since_start < offset:
-            time.sleep((offset - since_start).total_seconds())
+    n_total = 0
+    while True:
+        start = datetime.datetime.now()
+        n = 0
+        for msg in kafka_client.iterate():
+            since_start = datetime.datetime.now() - start
+            offset = timestamps.get_message_time_offset(msg)
+            if since_start < offset:
+                time.sleep((offset - since_start).total_seconds())
 
-        logger.debug(f"sending message of size {len(msg)}")
-        kafka_client.producer.produce(dst_topic, msg.value())
+            logger.debug(f"sending message of size {len(msg)}")
+            kafka_client.producer.produce(dst_topic, msg.value())
 
-        n += 1
+            n += 1
+        kafka_client.producer.flush()
+        n_total += n
+
+        if repeat_interval < 0:
+            break
+
+        since_start_sec = (datetime.datetime.now() - start).total_seconds()
+        logger.info(f"sent {n} alerts in {since_start_sec:.2f}s ({n / since_start_sec:.2f}/s)")
+
+        if since_start_sec < repeat_interval:
+            logger.info(f"going to sleep for {repeat_interval - since_start_sec:.2f}s")
+
+            time.sleep(repeat_interval - since_start_sec)
+        else:
+            logger.warn(f"unable to keep up with repeat interval: took {since_start_sec}s to run"
+                        + ", interval is {repeat_interval}")
+        kafka_client.seek_to_beginning()
 
     kafka_client.close()
 
-    return n
+    return n_total

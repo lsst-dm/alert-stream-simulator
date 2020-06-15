@@ -65,14 +65,16 @@ And now we can replay that stream::
 
   $ rubin-alert-sim --verbose play-stream \
       --src-topic=rubin_example \
-      --dst-topic=rubin_example_stream
+      --dst-topic=rubin_example_stream \
+      --repeat-interval=37
   INFO:rubin-alert-sim.play:sent 792 alerts in 1.67s (474.58/s)
 
-This second command is worth looking at closely. We set the ``--dst-topi`` to
+This second command is worth looking at closely. We set the ``--dst-topic`` to
 ``rubin_example_stream``: this will create a new topic with that name, and will
 pace the data into it at the same rate as we had set with ``create-stream``.
-Connect your consumers to the ``--dst-topic`` to simulate receiving Rubin's
-alerts.
+This data will be repeated every 37 seconds, which is set with the
+``--repeat-interval=37`` line. Connect your consumers to the ``--dst-topic`` to
+simulate receiving Rubin's alerts.
 
 
 Writing your own consumer

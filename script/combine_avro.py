@@ -7,7 +7,9 @@ import itertools
 
 def combine(input_glob, output_filepath):
     readers = []
-    for in_file_path in glob.glob(input_glob):
+    # names are ccdVisitId; sort to put them in temporal order
+    input_files = sorted(glob.glob(input_glob))
+    for in_file_path in input_files:
         infile = open(in_file_path, "rb")
         readers.append(fastavro.reader(infile))
     combined_reader = itertools.chain(*readers)

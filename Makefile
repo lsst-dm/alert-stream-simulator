@@ -17,13 +17,10 @@ lint:
 	flake8
 
 .PHONY: datasets
-datasets: data/rubin_single_ccd_sample.avro data/rubin_single_visit_sample.avro
+datasets: data/rubin_single_ccd_sample.avro 
 
 data:
 	mkdir -p data
 
 data/rubin_single_ccd_sample.avro: data
-	curl --fail "https://lsst-web.ncsa.illinois.edu/~swnelson/alert-stream-simulator/rubin_single_ccd_sample.avro" > data/rubin_single_ccd_sample.avro
-
-data/rubin_single_visit_sample.avro: data
-	curl --fail "https://lsst-web.ncsa.illinois.edu/~swnelson/alert-stream-simulator/rubin_single_visit_sample.avro" > data/rubin_single_visit_sample.avro
+	curl --fail "https://lsst.ncsa.illinois.edu/~ebellm/sample_precursor_alerts/latest_single_ccd_sample.avro" > data/rubin_single_ccd_sample.avro

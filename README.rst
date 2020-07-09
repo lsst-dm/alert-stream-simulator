@@ -22,6 +22,11 @@ mechanism you prefer), and then run ``make install``. Go get a cup of coffee whi
 datasets are downloaded, dependencies are installed, and Docker containers are
 built.
 
+Sample Data
+===========
+
+The installation process will download a sample of alerts taken from a single CCD into the `data/` directory. Larger samples of alerts suitable for bulk analysis and scale testing are available; see `sample_alert_info <https://github.com/lsst-dm/sample_alert_info/>`_ for locations from which alerts can be downloaded, again to the `data/` directory.  
+
 Usage
 =====
 

@@ -5,9 +5,9 @@ set +xeo pipefail
 # run with the alert-stream-simulator's 'scripts' directory in $PATH, and with
 # fastavro and python-snappy Python packages installed.
 
-INPUT_REPO=/project/morriscb/src/ap_verify_hits2015/DM-25229/
+INPUT_REPO=/project/morriscb/src/ap_verify_hits2015/DM-25930/
 DATASET=DECam-HiTS
-DATE=2020-07-06
+DATE=2020-07-15
 PUBLIC_DIR=/project/ebellm/sample_precursor_alerts/$DATE/$DATASET
 
 mkdir -p $PUBLIC_DIR

@@ -25,7 +25,7 @@ import astropy.time
 from lsst.alert.packet import SchemaRegistry
 
 
-alert_schema = SchemaRegistry.from_filesystem().get_by_version("2.1")
+alert_schema = SchemaRegistry.from_filesystem().get_by_version("3.0")
 
 
 def mock_alert(alert_id, timestamp):

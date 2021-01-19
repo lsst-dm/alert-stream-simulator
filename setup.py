@@ -4,7 +4,7 @@ install_requires = [
     'avro-python3',
     'confluent_kafka',
     'astropy',
-    'fastavro',
+    'fastavro<0.24',
     'python-snappy',
     'lsst-alert-packet>=0.2',
     'lsst-alert-stream>=0.2',

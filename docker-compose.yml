@@ -15,9 +15,9 @@ services:
       - KAFKA_DELETE_TOPIC_ENABLE=true
       - KAFKA_LOG_SEGMENT_DELETE_DELAY_MS=100
       - KAFKA_MESSAGE_MAX_BYTES=10000000 # 10MB
-    ports:
-      - "9092"
-      - "9292"
+    # ports:
+    #   - "9092"
+    #   - "9292"
     network_mode: host
 
   zookeeper:
@@ -27,24 +27,24 @@ services:
     environment:
       - ZOOKEEPER_CLIENT_PORT=32181
       - ZOOKEEPER_TICK_TIME=2000
-    ports:
-      - "32181"
+    # ports:
+    #   - "32181"
     network_mode: host
 
   grafana:
     image: grafana/grafana:6.7.2
     depends_on:
       - influxdb
-    ports:
-      - "3000"
+    # ports:
+    #   - "3000"
     network_mode: host
     volumes:
       - "./containers/grafana:/etc/grafana"
 
   influxdb:
     image: influxdb:1.7
-    ports:
-      - "8086"
+    # ports:
+    #   - "8086"
     network_mode: host
     volumes:
       - "./containers/influxdb:/etc/influxdb"

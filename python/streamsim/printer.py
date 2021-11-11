@@ -29,7 +29,7 @@ from lsst.alert.stream import serialization
 logger = logging.getLogger("rubin-alert-sim.printer")
 
 
-def print_stream(broker, topic):
+def print_stream(broker, topic, tls_config=None):
     """Prints the contents of a stream in real time.
 
     Parameters
@@ -38,8 +38,13 @@ def print_stream(broker, topic):
         The URL of a Kafka broker to connect to.
     topic : `str`
         The name of a Kafka topic to read.
+    tls_config : `streamsim._kafka.TLSConfig` or `None`
+        If not None, then a configuration bundle for TLS auth when connecting
+        to the broker.
     """
-    kafka_client = _kafka._KafkaClient(broker, enable_eof=False)
+    kafka_client = _kafka._KafkaClient(
+        broker, enable_eof=False, tls_config=tls_config,
+    )
     kafka_client.consumer.subscribe([topic])
     time.sleep(1)
     while True:

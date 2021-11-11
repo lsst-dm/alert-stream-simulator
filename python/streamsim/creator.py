@@ -30,7 +30,7 @@ from streamsim import _kafka, timestamps
 logger = logging.getLogger("rubin-alert-sim.prepare")
 
 
-def create(broker, topic, alert_file, timeout, force=False):
+def create(broker, topic, alert_file, timeout, force=False, tls_config=None):
     """Creates a new alert stream in the broker. Returns the number of alerts
     in the stream.
 
@@ -56,9 +56,12 @@ def create(broker, topic, alert_file, timeout, force=False):
         How long, in seconds, to wait for Kafka operations to return
     force : `bool`
         If true, overwrite the topic if it already exists
+    tls_config : `streamsim._kafka.TLSConfig` or `None`
+        If not None, then a configuration bundle for TLS auth when connecting
+        to the broker.
     """
     reader = fastavro.reader(alert_file)
-    kafka_client = _kafka._KafkaClient(broker)
+    kafka_client = _kafka._KafkaClient(broker, tls_config=tls_config)
 
     # Create a new topic for us to write to.
     kafka_client.create_topic(topic, num_partitions=1, delete_if_exists=force)

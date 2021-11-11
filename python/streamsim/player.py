@@ -28,7 +28,8 @@ from streamsim import _kafka, timestamps
 logger = logging.getLogger("rubin-alert-sim.play")
 
 
-def play(broker, src_topic, dst_topic, dst_topic_partitions, force, repeat_interval=-1):
+def play(broker, src_topic, dst_topic, dst_topic_partitions, force,
+         repeat_interval=-1, tls_config=None):
     """Replays an existing alert stream in the broker, copying it from
     src_topic to dst_topic while obeying time offset headers.
 
@@ -55,8 +56,11 @@ def play(broker, src_topic, dst_topic, dst_topic_partitions, force, repeat_inter
         How many partitions to create for `dst_topic`
     force : `bool`
         If true, overwrite `dst_topic` if it already exists
+    tls_config : `streamsim._kafka.TLSConfig` or `None`
+        If not None, then a configuration bundle for TLS auth when connecting
+        to the broker.
     """
-    kafka_client = _kafka._KafkaClient(broker)
+    kafka_client = _kafka._KafkaClient(broker, tls_config=tls_config)
     logger.debug(f"creating topic {dst_topic}")
     kafka_client.create_topic(dst_topic, dst_topic_partitions, force)
 

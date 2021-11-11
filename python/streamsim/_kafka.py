@@ -63,14 +63,24 @@ class _KafkaClient(object):
     enable_eof : `bool`
         Configure the client to subscribe to Kafka topics in a "single-pass"
         fashion, just reading through the topic once.
+    tls_config : `TLSConfig` or `None`
+        If not None, then a TLS configuration used when connecting to the
+        broker.
     """
-    def __init__(self, broker_url, id="rubin-alert-sim", enable_eof=True):
+    def __init__(self, broker_url, id="rubin-alert-sim", enable_eof=True, tls_config=None):
         logger.debug(f"creating client to connect to broker url={broker_url} id={id}")
+        if tls_config is not None:
+            logger.debug("using tls auth")
+            tls_config_dict = tls_config.as_confluent_kafka_config()
+        else:
+            tls_config_dict = {}
+
         admin_config = {
             "bootstrap.servers": broker_url,
             "socket.timeout.ms": 5_000,
             "error_cb": _error_callback,
             "throttle_cb": logger.warn,
+            **tls_config_dict,
         }
         self.admin = confluent_kafka.admin.AdminClient(admin_config)
         producer_config = {
@@ -82,6 +92,7 @@ class _KafkaClient(object):
             "message.max.bytes": 10_000_000,
             "queue.buffering.max.kbytes": 1_000_000,
             "queue.buffering.max.ms": 100,
+            **tls_config_dict,
         }
         self.producer = confluent_kafka.Producer(producer_config)
         consumer_config = {
@@ -92,6 +103,7 @@ class _KafkaClient(object):
             "group.id": id,
             "auto.offset.reset": "earliest",
             "enable.partition.eof": enable_eof,
+            **tls_config_dict,
         }
         self.consumer = confluent_kafka.Consumer(consumer_config)
 
@@ -348,3 +360,45 @@ def _is_unknown_topic_error(kafka_exception):
     """
     code = kafka_exception.args[0].code()
     return code == confluent_kafka.KafkaError.UNKNOWN_TOPIC_OR_PART
+
+
+class TLSConfig:
+    """
+    Bundle of configuration options used to establish an mTLS connection to a
+    broker.
+
+    """
+
+    def __init__(self, client_key_location, client_crt_location, server_ca_crt_location):
+        """
+        client_key_location : `str`
+            Path to client's private key (PEM) used for authentication.
+
+            In Strimzi, this is <USERNAME>/user.key.
+
+        client_crt_location : `str`
+            Path to client's public key (PEM) used for authentication.
+
+            In Strimzi, this is <USERNAME>/user.crt.
+
+        server_ca_crt_location : `str`
+            Path to CA certificate public key (PEM) used to sign the broker's
+            certificate.
+
+            In Strimzi, this is <CLUSTER-NAME>-cluster-ca-cert/ca.crt
+        """
+        self.ssl_key_location = client_key_location
+        self.ssl_certificate_location = client_crt_location
+        self.ssl_ca_location = server_ca_crt_location
+
+    def as_confluent_kafka_config(self):
+        """
+        Formats the config as the dictionary of options expected by
+        confluent_kafka's clients.
+        """
+        return {
+            "security.protocol": "ssl",
+            "ssl.key.location": self.ssl_key_location,
+            "ssl.certificate.location": self.ssl_certificate_location,
+            "ssl.ca.location": self.ssl_ca_location,
+        }

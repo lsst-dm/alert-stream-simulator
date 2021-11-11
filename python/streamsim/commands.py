@@ -22,7 +22,7 @@
 import argparse
 import logging
 
-from streamsim import creator, player, printer
+from streamsim import creator, player, printer, _kafka
 
 
 def run():
@@ -37,20 +37,57 @@ def run():
     else:
         logging.basicConfig(level=logging.WARNING)
 
+    tls_config = _unpack_tls_arguments(args)
     if args.subcommand == "create-stream":
         logging.debug(f"dispatching create-stream command with args: {args}")
-        n = creator.create(args.broker, args.dst_topic, args.file, args.timeout_sec, args.force)
+        n = creator.create(args.broker, args.dst_topic, args.file, args.timeout_sec,
+                           tls_config, args.force)
         print(f"successfully preloaded stream with {n} alerts")
     elif args.subcommand == "play-stream":
         logging.debug(f"dispatching play-stream command with args: {args}")
         n = player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
-                        args.force, args.repeat_interval)
+                        args.force, tls_config, args.repeat_interval)
         print(f"played {n} alerts from the stream")
     elif args.subcommand == "print-stream":
         logging.debug(f"dispatching print-stream command with args: {args}")
-        printer.print_stream(args.broker, args.src_topic)
+        printer.print_stream(args.broker, tls_config, args.src_topic)
     else:
         parser.print_usage()
+
+
+def _add_tls_arguments(subcommand):
+    subcommand.add_argument(
+        "--tls-client-key-location", type=str, default="",
+        help="path to a client PEM key used for mTLS authentication"
+    )
+    subcommand.add_argument(
+        "--tls-client-crt-location", type=str, default="",
+        help="path to a client public cert used for mTLS authentication"
+    )
+    subcommand.add_argument(
+        "--tls-server-ca-crt-location", type=str, default="",
+        help="path to a CA public cert used to verify the server's TLS cert"
+    )
+
+
+def _unpack_tls_arguments(args):
+    # Params should either be all empty, or all set
+    parameters = [
+        args.tls_server_ca_crt_location,
+        args.tls_client_key_location,
+        args.tls_client_crt_location,
+    ]
+    if all(x == "" for x in parameters):
+        return None
+
+    if any(x == "" for x in parameters):
+        raise ValueError("either all --tls options must be set, or none of them")
+
+    return _kafka.TLSConfig(
+        args.tls_client_key_location,
+        args.tls_client_crt_location,
+        args.tls_server_ca_crt_location,
+    )
 
 
 def construct_argparser():
@@ -89,6 +126,7 @@ def construct_argparser():
         "--timeout-sec", type=float, default=10.0,
         help="how long, in seconds, to wait before giving up when flushing a write to kafka",
     )
+    _add_tls_arguments(create_cmd)
     create_cmd.add_argument(
         "file", type=argparse.FileType('rb'),
         help="alert file to send",
@@ -121,6 +159,7 @@ def construct_argparser():
         "--repeat-interval", type=int, default=-1,
         help="interval to repeat the stream, in seconds. <0 means don't repeat",
     )
+    _add_tls_arguments(play_cmd)
 
     print_cmd = subparsers.add_parser(
         "print-stream", help="print the size of messages in the stream in real time"
@@ -133,4 +172,6 @@ def construct_argparser():
         "--src-topic", type=str, default="alerts-reservoir",
         help="name of the Kafka topic that is the source of the stream",
     )
+    _add_tls_arguments(print_cmd)
+
     return parser

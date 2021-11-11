@@ -22,10 +22,10 @@ import io
 
 import astropy.time
 
-from lsst.alert.packet import SchemaRegistry
+from lsst.alert.packet import Schema, get_path_to_latest_schema
 
 
-alert_schema = SchemaRegistry.from_filesystem().get_by_version("3.0")
+alert_schema = Schema.from_file(get_path_to_latest_schema())
 
 
 def mock_alert(alert_id, timestamp):

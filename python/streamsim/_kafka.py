@@ -64,7 +64,8 @@ class _KafkaClient(object):
         Configure the client to subscribe to Kafka topics in a "single-pass"
         fashion, just reading through the topic once.
     tls_config : `TLSConfig` or `None`
-        If not None, then a TLS configuration used when connecting to the broker.
+        If not None, then a TLS configuration used when connecting to the
+        broker.
     """
     def __init__(self, broker_url, id="rubin-alert-sim", enable_eof=True, tls_config=None):
         logger.debug(f"creating client to connect to broker url={broker_url} id={id}")

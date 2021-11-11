@@ -41,16 +41,16 @@ def run():
     if args.subcommand == "create-stream":
         logging.debug(f"dispatching create-stream command with args: {args}")
         n = creator.create(args.broker, args.dst_topic, args.file, args.timeout_sec,
-                           tls_config, args.force)
+                           args.force, tls_config)
         print(f"successfully preloaded stream with {n} alerts")
     elif args.subcommand == "play-stream":
         logging.debug(f"dispatching play-stream command with args: {args}")
         n = player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
-                        args.force, tls_config, args.repeat_interval)
+                        args.force, args.repeat_interval, tls_config)
         print(f"played {n} alerts from the stream")
     elif args.subcommand == "print-stream":
         logging.debug(f"dispatching print-stream command with args: {args}")
-        printer.print_stream(args.broker, tls_config, args.src_topic)
+        printer.print_stream(args.broker, args.src_topic, tls_config)
     else:
         parser.print_usage()
 

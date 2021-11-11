@@ -70,7 +70,7 @@ jobs:
         rubin-alert-sim --debug create-stream --dst-topic=test-reservoir ./data/rubin_single_ccd_sample.avro
         rubin-alert-sim --debug play-stream --src-topic=test-reservoir --dst-topic=test-stream
 
-  image:
+  build_image:
     runs-on: ubuntu-latest
     needs: [test]
 

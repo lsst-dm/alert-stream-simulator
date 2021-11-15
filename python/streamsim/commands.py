@@ -41,7 +41,7 @@ def run():
     if args.subcommand == "create-stream":
         logging.debug(f"dispatching create-stream command with args: {args}")
         n = creator.create(args.broker, args.dst_topic, args.file, args.timeout_sec,
-                           args.force, tls_config)
+                           args.force, tls_config, schema_id=args.schema_id)
         print(f"successfully preloaded stream with {n} alerts")
     elif args.subcommand == "play-stream":
         logging.debug(f"dispatching play-stream command with args: {args}")
@@ -125,6 +125,10 @@ def construct_argparser():
     create_cmd.add_argument(
         "--timeout-sec", type=float, default=10.0,
         help="how long, in seconds, to wait before giving up when flushing a write to kafka",
+    )
+    create_cmd.add_argument(
+        "--schema-id", type=int, default=1,
+        help="Confluent Schema Registry schema ID to use in alert packet header",
     )
     _add_tls_arguments(create_cmd)
     create_cmd.add_argument(

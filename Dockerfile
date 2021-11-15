@@ -29,6 +29,9 @@ COPY . /app
 WORKDIR /app
 RUN pip install --no-cache-dir .
 
+# Load precomputed alert data
+RUN make datasets
+
 FROM base-image AS runtime-image
 
 # Create a non-root user
@@ -39,6 +42,7 @@ WORKDIR /home/appuser
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY --from=build-image /opt/venv /opt/venv
+COPY --from=build-image /app/data /var/sample_alert_data
 
 # Switch to non-root user
 USER appuser

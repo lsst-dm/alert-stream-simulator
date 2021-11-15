@@ -37,7 +37,10 @@ def run():
     else:
         logging.basicConfig(level=logging.WARNING)
 
-    tls_config = _unpack_tls_arguments(args)
+    try:
+        tls_config = _unpack_tls_arguments(args)
+    except AttributeError:
+        tls_config = None
     if args.subcommand == "create-stream":
         logging.debug(f"dispatching create-stream command with args: {args}")
         n = creator.create(args.broker, args.dst_topic, args.file, args.timeout_sec,
@@ -46,7 +49,7 @@ def run():
     elif args.subcommand == "play-stream":
         logging.debug(f"dispatching play-stream command with args: {args}")
         n = player.play(args.broker, args.src_topic, args.dst_topic, args.dst_topic_partitions,
-                        args.force, args.repeat_interval, tls_config)
+                        args.create_dst_topic, args.repeat_interval, tls_config)
         print(f"played {n} alerts from the stream")
     elif args.subcommand == "print-stream":
         logging.debug(f"dispatching print-stream command with args: {args}")
@@ -153,11 +156,12 @@ def construct_argparser():
         help="number of partitions to create for the destination topic"
     )
     play_cmd.add_argument(
-        "--src-topic", type=str, default="alerts-reservoir",
-        help="name of the Kafka topic that is the source of the stream",
+        "--create-dst-topic", action="store_true",
+        help="create dst-topic, overwriting if it already exists",
     )
     play_cmd.add_argument(
-        "--force", action="store_true", help="overwrite dst-topic if it already exists",
+        "--src-topic", type=str, default="alerts-reservoir",
+        help="name of the Kafka topic that is the source of the stream",
     )
     play_cmd.add_argument(
         "--repeat-interval", type=int, default=-1,

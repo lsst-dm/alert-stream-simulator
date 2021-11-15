@@ -84,7 +84,7 @@ def create(broker, topic, alert_file, timeout, force=False, tls_config=None, sch
     logger.debug(f"first timestamp: {first_timestamp}")
     n = 0
     for alert in itertools.chain([first_alert], reader):
-        alert_bytes = _serialize_alert(alert, schema, schema_id)
+        alert_bytes = serialization.serialize_alert(alert, schema, schema_id)
         time_offset = (timestamps.alert_time(alert) - first_timestamp)
         logger.debug(f"producing alert id={alert['alertId']} with time_offset={time_offset}")
         kafka_client.producer.produce(
@@ -99,11 +99,3 @@ def create(broker, topic, alert_file, timeout, force=False, tls_config=None, sch
     kafka_client.close()
 
     return n
-
-
-def _serialize_alert(alert, schema, schema_id):
-    # Serialize a single alert with a hardcoded schema ID.
-    buf = io.BytesIO()
-    buf.write(serialization.serialize_confluent_wire_header(schema_id))
-    fastavro.schemaless_writer(buf, schema, alert)
-    return buf.getvalue()

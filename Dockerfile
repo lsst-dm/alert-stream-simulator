@@ -27,10 +27,12 @@ RUN pip install --upgrade --no-cache-dir pip setuptools wheel
 
 COPY . /app
 WORKDIR /app
-RUN pip install --no-cache-dir .
 
 # Load precomputed alert data
 RUN make datasets
+
+# Install package
+RUN pip install --no-cache-dir .
 
 FROM base-image AS runtime-image
 
@@ -41,8 +43,8 @@ WORKDIR /home/appuser
 # Make sure we use the virtualenv
 ENV PATH="/opt/venv/bin:$PATH"
 
-COPY --from=build-image /opt/venv /opt/venv
 COPY --from=build-image /app/data /var/sample_alert_data
+COPY --from=build-image /opt/venv /opt/venv
 
 # Switch to non-root user
 USER appuser

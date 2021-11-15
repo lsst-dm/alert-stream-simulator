@@ -1,4 +1,4 @@
-# This Dockerfile has four stages:
+# This Dockerfile has three stages:
 #
 # base-image
 #   Updates the base Python image with security patches and common system

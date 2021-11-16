@@ -5,9 +5,10 @@
 
 set -eo pipefail
 
-if [ -z "$1" ]; then
-    echo 'Usage: scripts/docker-tag.sh $GITHUB_REF' >&2
-    exit 1
+if [ -n "$GITHUB_HEAD_REF" ]; then
+    # For pull requests
+    echo ${GITHUB_HEAD_REF} | sed -E 's,/,-,g'
+else
+    # For push events
+    echo ${GITHUB_REF} | sed -E 's,refs/(heads|tags)/,,' | sed -E 's,/,-,g'
 fi
-
-echo "$1" | sed -E 's,refs/(heads|tags)/,,' | sed -E 's,/,-,g'

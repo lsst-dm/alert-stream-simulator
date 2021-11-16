@@ -1,5 +1,5 @@
 alert-stream-simulator
-################
+######################
 
 This repository holds a simulator for Rubin's alert stream, as described in
 `DMTN-149`_.
@@ -25,7 +25,7 @@ built.
 Sample Data
 ===========
 
-The installation process will download a sample of alerts taken from a single CCD into the `data/` directory. Larger samples of alerts suitable for bulk analysis and scale testing are available; see `sample_alert_info <https://github.com/lsst-dm/sample_alert_info/>`_ for locations from which alerts can be downloaded, again to the `data/` directory.  
+The installation process will download a sample of alerts taken from a single CCD into the `data/` directory. Larger samples of alerts suitable for bulk analysis and scale testing are available; see `sample_alert_info <https://github.com/lsst-dm/sample_alert_info/>`_ for locations from which alerts can be downloaded, again to the `data/` directory.
 
 Usage
 =====

@@ -16,11 +16,18 @@ test:
 lint:
 	flake8
 
+.PHONY: image
+image: datasets
+	docker build .
+
 .PHONY: datasets
-datasets: data/rubin_single_ccd_sample.avro 
+datasets: data/rubin_single_ccd_sample.avro data/rubin_single_visit_sample.avro
 
 data:
 	mkdir -p data
 
 data/rubin_single_ccd_sample.avro: data
-	curl --fail "https://lsst.ncsa.illinois.edu/~ebellm/sample_precursor_alerts/latest_single_ccd_sample.avro" > data/rubin_single_ccd_sample.avro
+	wget --no-verbose --output-document data/rubin_single_ccd_sample.avro https://lsst.ncsa.illinois.edu/~ebellm/sample_precursor_alerts/latest_single_ccd_sample.avro
+
+data/rubin_single_visit_sample.avro: data
+	wget --no-verbose --output-document data/rubin_single_visit_sample.avro https://lsst.ncsa.illinois.edu/~ebellm/sample_precursor_alerts/latest_single_visit_sample.avro

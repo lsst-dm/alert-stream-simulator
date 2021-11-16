@@ -23,6 +23,7 @@ import itertools
 
 import fastavro
 
+from lsst.alert.packet import Schema
 from lsst.alert.stream import serialization
 from streamsim import _kafka, timestamps
 
@@ -30,7 +31,7 @@ from streamsim import _kafka, timestamps
 logger = logging.getLogger("rubin-alert-sim.prepare")
 
 
-def create(broker, topic, alert_file, timeout, force=False, tls_config=None):
+def create(broker, topic, alert_file, timeout, force=False, tls_config=None, schema=None, schema_id=0):
     """Creates a new alert stream in the broker. Returns the number of alerts
     in the stream.
 
@@ -59,9 +60,18 @@ def create(broker, topic, alert_file, timeout, force=False, tls_config=None):
     tls_config : `streamsim._kafka.TLSConfig` or `None`
         If not None, then a configuration bundle for TLS auth when connecting
         to the broker.
+    schema : `dict` or None
+        An Avro schema document to use when encoding messages. If None, the
+        latest schema bundled into the lsst.alert.packet package is used.
+    schema_id : `int`
+        An Confluent Schema Registry schema ID to use in encoded messages.
     """
     reader = fastavro.reader(alert_file)
     kafka_client = _kafka._KafkaClient(broker, tls_config=tls_config)
+
+    # Use latest schema if it isn't specified
+    if schema is None:
+        schema = Schema.from_file().definition
 
     # Create a new topic for us to write to.
     kafka_client.create_topic(topic, num_partitions=1, delete_if_exists=force)
@@ -73,7 +83,7 @@ def create(broker, topic, alert_file, timeout, force=False, tls_config=None):
     logger.debug(f"first timestamp: {first_timestamp}")
     n = 0
     for alert in itertools.chain([first_alert], reader):
-        alert_bytes = serialization.serialize_alert(alert)
+        alert_bytes = serialization.serialize_alert(alert, schema, schema_id)
         time_offset = (timestamps.alert_time(alert) - first_timestamp)
         logger.debug(f"producing alert id={alert['alertId']} with time_offset={time_offset}")
         kafka_client.producer.produce(

@@ -117,6 +117,6 @@ jobs:
           context: .
           push: true
           # TODO: get acccess to lsstdm instead of swnelson personal repo
-          tags: swnelson/alert-stream-simulator:${{ steps.vars.outputs.tag }}
+          tags: lsstdm/alert-stream-simulator:${{ steps.vars.outputs.tag }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new

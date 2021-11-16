@@ -43,8 +43,15 @@ def run():
         tls_config = None
     if args.subcommand == "create-stream":
         logging.debug(f"dispatching create-stream command with args: {args}")
-        n = creator.create(args.broker, args.dst_topic, args.file, args.timeout_sec,
-                           args.force, tls_config, schema_id=args.schema_id)
+        n = creator.create(
+            broker=args.broker,
+            topic=args.dst_topic,
+            alert_file=args.file,
+            timeout=args.timeout_sec,
+            create_topic=args.create_topic,
+            tls_config=tls_config,
+            schema_id=args.schema_id,
+        )
         print(f"successfully preloaded stream with {n} alerts")
     elif args.subcommand == "play-stream":
         logging.debug(f"dispatching play-stream command with args: {args}")
@@ -123,7 +130,7 @@ def construct_argparser():
         help="Kafka topic name to use for the dataset reservoir",
     )
     create_cmd.add_argument(
-        "--force", action="store_true", help="overwrite dst-topic if it already exists",
+        "--create-topic", action="store_true", help="create topic, overwriting if it already exists",
     )
     create_cmd.add_argument(
         "--timeout-sec", type=float, default=10.0,

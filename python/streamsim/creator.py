@@ -31,7 +31,7 @@ from streamsim import _kafka, timestamps
 logger = logging.getLogger("rubin-alert-sim.prepare")
 
 
-def create(broker, topic, alert_file, timeout, force=False, tls_config=None, schema=None, schema_id=0):
+def create(broker, topic, alert_file, timeout, create_topic=False, tls_config=None, schema=None, schema_id=0):
     """Creates a new alert stream in the broker. Returns the number of alerts
     in the stream.
 
@@ -55,8 +55,8 @@ def create(broker, topic, alert_file, timeout, force=False, tls_config=None, sch
         format.
     timeout : `float`
         How long, in seconds, to wait for Kafka operations to return
-    force : `bool`
-        If true, overwrite the topic if it already exists
+    create_topic : `bool`
+        Create the topic. If it already exists, overwrite it.
     tls_config : `streamsim._kafka.TLSConfig` or `None`
         If not None, then a configuration bundle for TLS auth when connecting
         to the broker.
@@ -74,7 +74,8 @@ def create(broker, topic, alert_file, timeout, force=False, tls_config=None, sch
         schema = Schema.from_file().definition
 
     # Create a new topic for us to write to.
-    kafka_client.create_topic(topic, num_partitions=1, delete_if_exists=force)
+    if create_topic:
+        kafka_client.create_topic(topic, num_partitions=1, delete_if_exists=True)
 
     # Peak at the first alert in the file. This becomes our reference point for
     # measuring timestamps.

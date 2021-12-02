@@ -124,7 +124,7 @@ class _KafkaClient(object):
         response = self.admin.delete_topics([topic], operation_timeout=5.0)
         return response[topic].result()
 
-    def create_topic(self, topic, num_partitions=1, delete_if_exists=False):
+    def create_topic(self, topic, num_partitions=1, delete_if_exists=False, topic_config=None):
         """Create a topic in the Kafka cluster.
 
         Parameters
@@ -148,6 +148,7 @@ class _KafkaClient(object):
             topic=topic,
             num_partitions=num_partitions,
             replication_factor=1,
+            config=topic_config,
         )
         response = self.admin.create_topics([new_topic], operation_timeout=5.0)
         return response[topic].result()

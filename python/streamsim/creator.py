@@ -75,7 +75,14 @@ def create(broker, topic, alert_file, timeout, create_topic=False, tls_config=No
 
     # Create a new topic for us to write to.
     if create_topic:
-        kafka_client.create_topic(topic, num_partitions=1, delete_if_exists=True)
+        kafka_client.create_topic(
+            topic,
+            num_partitions=1,
+            delete_if_exists=True,
+            topic_config={
+                "retention.ms": "-1",  # infinite
+                "retention.bytes": "-1",
+            })
 
     # Peak at the first alert in the file. This becomes our reference point for
     # measuring timestamps.

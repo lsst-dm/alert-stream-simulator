@@ -144,6 +144,8 @@ class _KafkaClient(object):
         logger.debug(f"creating topic name={topic} num_partitions={num_partitions}")
         if delete_if_exists:
             return self._create_topic_force(topic, num_partitions)
+        if topic_config is None:
+            topic_config = {}
         new_topic = confluent_kafka.admin.NewTopic(
             topic=topic,
             num_partitions=num_partitions,

@@ -211,7 +211,7 @@ class _KafkaClient(object):
         return response[topic].result()
 
     def describe_topic(self, topic, timeout=5.0):
-v        """Fetch confluent_kafka.TopicMetadata describing a topic.
+        """Fetch confluent_kafka.TopicMetadata describing a topic.
 
         Parameters
         ----------

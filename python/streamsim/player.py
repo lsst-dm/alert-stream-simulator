@@ -82,7 +82,7 @@ def play(broker, src_topic, dst_topic, dst_topic_partitions, create_topic,
             kafka_client.producer.produce(dst_topic, msg.value())
 
             n += 1
-        kafka_client.producer.flush()
+        kafka_client.producer.flush(10)
         n_total += n
 
         if repeat_interval < 0:

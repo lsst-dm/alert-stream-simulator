@@ -47,7 +47,6 @@ def _error_callback(kafka_error):
         logger.warn("client is currently disconnected from all brokers")
     else:
         logger.error(f"internal kafka error: {kafka_error}")
-        raise(confluent_kafka.KafkaException(kafka_error))
 
 
 class _KafkaClient(object):
@@ -237,7 +236,7 @@ class _KafkaClient(object):
         """
         logger.debug("shutting down client")
         self.consumer.close()
-        self.producer.flush()
+        self.producer.flush(10)
 
     def subscribe(self, topic, timeout=10.0):
         """Subscribes to a topic for consuming. This method doesn't use Kafka's
